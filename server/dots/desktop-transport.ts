@@ -7,7 +7,9 @@ import {validateCdpUrl} from '../cdp/dom.js';
 import {DotsError,type DesktopHttpRequest,type DesktopHttpTransport} from './types.js';
 
 // 本构建的已初始化 AppHost services 导出；绝不调用 connect-app-host 再注册 AppView。
-export const DOTS_DESKTOP_CONTRACT=DESKTOP_APP_HOST_CONTRACT;
+export const DOTS_DESKTOP_CONTRACT={...DESKTOP_APP_HOST_CONTRACT,compatibleContracts:[
+ {version:'26.1007.30912',module:'./assets/app-shared-8bd9d0399038.js',servicesExport:'fN',apiExport:'$wt'},
+]};
 const responseLimit=16*1024*1024;
 
 export class CdpDesktopHttpTransport implements DesktopHttpTransport {

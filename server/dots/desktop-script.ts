@@ -2,7 +2,8 @@
 export const dotsStatusScript = String.raw`async ({contract,timeoutMs})=>{
     const bridge=window.electronBridge;
     const version=bridge?.getSentryInitOptions?.()?.appVersion??bridge?.getAppVersion?.();
-    if(version!==contract.version)return {available:false,error:'此桌面版本尚未验证 Dots 通道（'+(version??'未知')+'）'};
+    contract=[contract,...(contract.compatibleContracts??[])].find(candidate=>candidate.version===version);
+    if(!contract)return {available:false,error:'此桌面版本尚未验证 Dots 通道（'+(version??'未知')+'）'};
     const module=await import(new URL(contract.module,location.href).href);
     const http=module[contract.servicesExport]?.httpFetch;
     if(!http||typeof http.fetch!=='function'||typeof http.cancel!=='function')return {available:false,error:'桌面 AppHost HTTP 服务尚未就绪'};
@@ -16,6 +17,10 @@ export const dotsStatusScript = String.raw`async ({contract,timeoutMs})=>{
 }`;
 
 export const dotsRequestScript = String.raw`async ({request,contract,limit,identity,timeoutMs})=>{
+   const bridge=window.electronBridge;
+   const version=bridge?.getSentryInitOptions?.()?.appVersion??bridge?.getAppVersion?.();
+   contract=[contract,...(contract.compatibleContracts??[])].find(candidate=>candidate.version===version);
+   if(!contract)throw new Error('此桌面版本尚未验证 Dots 通道（'+(version??'未知')+'）');
    const module=await import(new URL(contract.module,location.href).href);
    const services=module[contract.servicesExport],http=services?.httpFetch;
    const sameAccount=async()=>{const state=await services.accessInputs.readAccountInfo(true);return state?.status==='ready'&&state.data?.accountId===identity.accountId&&state.data?.userId===identity.userId;};
