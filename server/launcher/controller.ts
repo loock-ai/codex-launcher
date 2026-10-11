@@ -1,3 +1,4 @@
+import {ScriptPluginHost,type PluginTransportFactory} from './script-plugins.js';
 import {DotsAdapter} from '../dots/adapter.js';
 import {CdpDesktopHttpTransport} from '../dots/desktop-transport.js';
 import { EventEmitter } from 'node:events';
@@ -15,13 +16,18 @@ import { createGateway } from '../gateway.js';
 import { startManagedAppServer,appServerEnvironment } from '../app-server-manager.js';
 
 const exec=promisify(execFile);
-type Service={port:number;close():Promise<void>};
+type Service={port:number;pluginEndpoint?:string|null;close():Promise<void>};
 export interface LauncherStatus {config:LauncherConfig;running:boolean;phase:string;error:string;clients:number;approvals:number;thread:string;accessUrl:string|null;logs:string[]}
-interface Dependencies {start?:(config:LauncherConfig)=>Promise<Service>;desktopRunning?:()=>Promise<boolean>;openDesktop?:(config:LauncherConfig)=>Promise<void>;forceStopDesktop?:(config:LauncherConfig)=>Promise<void>;launchDebugDesktop?:(config:LauncherConfig)=>Promise<void>;debugReady?:()=>Promise<boolean>}
+interface Dependencies {pluginTransport?:PluginTransportFactory;start?:(config:LauncherConfig)=>Promise<Service>;desktopRunning?:()=>Promise<boolean>;openDesktop?:(config:LauncherConfig)=>Promise<void>;forceStopDesktop?:(config:LauncherConfig)=>Promise<void>;launchDebugDesktop?:(config:LauncherConfig)=>Promise<void>;debugReady?:()=>Promise<boolean>}
 export class LauncherController extends EventEmitter {
  private config!:LauncherConfig;private service:Service|null=null;private phase='未启动';private error='';private clients=0;private approvals=0;private thread='';private logs:string[]=[];private queue:Promise<unknown>=Promise.resolve();private timer:ReturnType<typeof setInterval>|null=null;
- constructor(private configFile:string,private packageRoot:string,private deps:Dependencies={}){super();}
- async initialize(){this.config=await loadConfig(this.configFile);this.changed();return this.status();}
+ private plugins:ScriptPluginHost;
+ constructor(private configFile:string,private packageRoot:string,private deps:Dependencies={}){super();this.plugins=new ScriptPluginHost(configFile,packageRoot,deps.pluginTransport);}
+ pluginDirectory(){return this.plugins.directory;}
+ listPlugins(){return this.plugins.list();}
+ setPluginEnabled(id:string,enabled:boolean){return this.plugins.setEnabled(id,enabled);}
+ reloadPlugins(){return this.plugins.reload();}
+ async initialize(){this.config=await loadConfig(this.configFile);await this.plugins.initialize();this.changed();return this.status();}
  private serialize<T>(action:()=>Promise<T>) {const p=this.queue.then(action,action);this.queue=p.catch(()=>{});return p;}
  private changed(){this.emit('status',this.status());}
  private log(text:string){this.logs=[...this.logs,new Date().toLocaleTimeString('zh-CN')+' '+text.replaceAll(this.config.token,'[口令]').slice(0,500)].slice(-40);this.changed();}
@@ -69,11 +75,12 @@ export class LauncherController extends EventEmitter {
      if(managed)managed.exited.then(()=>{this.error='原 app-server 已退出';this.log(this.error);void this.stop();});
     }catch(error){await managed?.close();throw error;}
    }
+   await this.plugins.bind(this.config.mode==='cdp'?(this.deps.start?this.service?.pluginEndpoint??null:`http://127.0.0.1:${this.config.cdpPort}`):null);
    this.phase='已启动';this.log(this.config.mode==='cdp'?'桌面控制通道与 Web 已启动':'原 Codex Mobile 已启动');return this.status();
   }catch(error){this.phase='连接失败';this.error=error instanceof Error?error.message:String(error);this.log(this.error);throw error;}
  }
  stop(){return this.serialize(async()=>{await this.stopInternal();return this.status();});}
- private async stopInternal(){const owned=this.service;this.service=null;await owned?.close();if(this.timer)clearInterval(this.timer);this.clients=0;this.approvals=0;this.thread='';this.error='';this.phase='未启动';this.changed();}
+ private async stopInternal(){await this.plugins.bind(null);const owned=this.service;this.service=null;await owned?.close();if(this.timer)clearInterval(this.timer);this.clients=0;this.approvals=0;this.thread='';this.error='';this.phase='未启动';this.changed();}
  async approve(_id:string,_choice:string){throw new Error('请在 Web 中打开对应会话处理审批');}
  async desktopStatus(){if(this.config.mode!=='cdp'||!this.service)return null;const channel=(this.service as Awaited<ReturnType<typeof createControlGateway>>).channel;return {...channel.status(),approvals:channel.pendingApprovals()};}
 }

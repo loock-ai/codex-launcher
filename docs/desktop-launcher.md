@@ -1,18 +1,18 @@
-# Codex Mobile 菜单栏启动器
+# Codex 启动器
 
 启动器是 macOS 菜单栏应用，支持桌面 CDP 桥接、托管和外部 app-server。源码已合并到 `main`；应用包可从源码构建，目前未签名。
 
 ## 启动
 
-打开 `launcher-release/mac-arm64/Codex Mobile Launcher.app`，点击菜单栏 `⌘` 图标。
+打开 `launcher-release/mac-arm64/Codex 启动器.app`，点击菜单栏 `⌘` 图标。
 
 1. 在「设置」选择连接模式并保存。
-2. 点击「启动并打开 Web」。
+2. 启动器打开后自动启动 Web 服务；连接成功后点击「打开 Web」。
 3. 在「连接」页点击「展开二维码」后扫码，手机与电脑连接同一局域网。二维码默认收起。
 4. 在手机现有界面选择桌面会话。CDP 模式通过结构化控制通道读取所选主机的项目、会话和历史，发送消息并处理审批；运行中的会话支持补充引导和非阻塞问题回答。
 5. 「停止连接」关闭启动器自己的网关与托管 app-server；CDP 模式保留 ChatGPT 应用。
 
-配置保存在 macOS 应用用户数据目录的 `config.json`，权限 0600。默认不自动启动服务，不安装开机启动项。二维码带访问口令；日志隐藏口令。CDP 只使用本机地址，局域网网关必须鉴权。
+配置保存在 macOS 应用用户数据目录的 `config.json`，权限 0600。打开启动器后默认自动启动服务，不自动安装开机启动项。二维码带访问口令；日志隐藏口令。CDP 只使用本机地址，局域网网关必须鉴权。
 
 ## 三种模式
 
@@ -117,7 +117,7 @@ node bin/codex-mobile.mjs launcher --open-web
 macOS 打包版本（路径按实际安装位置替换）：
 
 ```bash
-open -n "/Users/loock/myFile/codex-launcher/launcher-release/mac-arm64/Codex Mobile Launcher.app" --args --open-web
+open -n "/Users/loock/myFile/codex-launcher/launcher-release/mac-arm64/Codex 启动器.app" --args --open-web
 ```
 
 `-n` 确保 macOS 将参数交给启动器；启动器的单实例机制会把命令转交已运行实例，不创建第二个网关。命令等初始化完成后调用现有连接流程，连接成功才用系统默认浏览器打开带访问口令的 Web 地址。使用保存的模式、端口和口令；不会打印口令，也不会自动确认重启桌面。失败由启动器显示错误，后续命令仍可继续执行。`open` 的退出码只表示已派发，不代表连接成功。

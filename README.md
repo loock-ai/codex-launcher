@@ -1,4 +1,4 @@
-# Codex Mobile Launcher
+# Codex 启动器
 
 [![Apache-2.0](https://img.shields.io/github/license/loock-ai/codex-mobile)](LICENSE)
 ![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Web-111111)
@@ -6,7 +6,7 @@
 
 **在 Mac 上启动连接，在手机上继续桌面的 Codex 任务。**
 
-Codex Mobile Launcher 是一个 macOS 菜单栏启动器。它负责启动和配置桌面连接，
+Codex 启动器 是一个 macOS 菜单栏启动器。它负责启动和配置桌面连接，
 提供手机可访问的 Web 页面，让你查看项目和会话、收发消息、处理审批，
 也能在任务运行时补充引导，或者进入独立的 Dots 对话。
 
@@ -36,7 +36,7 @@ npm run package:launcher
 打开生成的应用：
 
 ```bash
-open "launcher-release/mac-arm64/Codex Mobile Launcher.app"
+open "launcher-release/mac-arm64/Codex 启动器.app"
 ```
 
 只运行源码版面板，也可使用：
@@ -51,7 +51,7 @@ npm run launcher
 点击 Mac 菜单栏的 `⌘` 图标打开启动器。
 
 1. 在 **设置** 中选择 **CDP 桌面桥接**，核对 ChatGPT 应用路径并保存。
-2. 点击 **启动并打开 Web**，启动器会建立连接并打开网页。
+2. 启动器打开后会按保存的配置自动启动 Web 服务；连接成功后，点击 **打开 Web** 进入网页。
 3. 如果 ChatGPT 已运行但没有开启 CDP，点击 **强制重启**，重新启动桌面并连接。
 
 **强制重启**直接终止所配置 ChatGPT 安装包的主进程，随后以 CDP 参数启动。
@@ -85,6 +85,7 @@ npm run launcher
 | 停止连接 | 关闭启动器自己的网关，保留 ChatGPT 桌面应用 |
 | 强制重启 | 直接强制重启 ChatGPT、开启 CDP 并重新连接 |
 | 打开 ChatGPT | 打开配置的桌面应用 |
+| 插件 | 读取配置目录中的脚本，独立开启、关闭或重新加载桌面注入功能 |
 | 设置 | 修改连接模式、端口、访问范围和口令；修改前需停止连接 |
 | 审批 | 查看等待处理的请求，并进入 Web 回答 |
 | 日志 | 查看启动和连接失败原因，日志隐藏访问口令 |
@@ -102,13 +103,16 @@ node bin/codex-mobile.mjs launcher --open-web
 使用打包应用：
 
 ```bash
-open -n "launcher-release/mac-arm64/Codex Mobile Launcher.app" --args --open-web
+open -n "launcher-release/mac-arm64/Codex 启动器.app" --args --open-web
 ```
 
-命令使用已保存的配置，连接成功后打开 Web。启动器已有实例时会转交命令，
+普通启动会自动启动服务并显示面板；`--open-web` 使用已保存的配置，连接成功后打开浏览器。启动器已有实例时会转交命令，
 不会重复创建网关。
 
 ## 手机上可以做什么
+
+Web 按浏览器 UA 区分桌面与移动设备：桌面常驻左侧会话栏，右侧显示对话；
+手机和平板使用抽屉式侧栏。桌面窗口缩小后仍保持两栏，Dots 也保留侧栏入口。
 
 | 功能 | 说明 |
 | --- | --- |
@@ -170,12 +174,24 @@ Dots 的房间、附件和身份处理见 [Dots 适配](docs/dots-adapter.md)。
 
 ## 当前边界
 
-- Dots 与原生用户问题快照绑定桌面版本 `26.1002.52244`，升级桌面后可能需要更新适配。
+- Dots 支持桌面版本 `26.1002.52244` 和 `26.1007.30912`；原生用户问题快照仍绑定 `26.1002.52244`，升级桌面后可能需要更新适配。
 - 普通权限审批尚无完整的快照补读；非阻塞用户问题有单独快照适配。
 - Dots 接收采用前台轮询，暂不支持语音、创建 Dot 和复杂交互审批。
 - 桌面新任务的云端工作位置选择尚未接入。
 - 自动化覆盖受控 Electron 和浏览器链路，真实账户兼容性仍需实际使用确认。
 - 当前访问口令方案适用于可信局域网；跨不可信网络连接应增加 HTTPS 和正式身份认证。
+
+## 桌面脚本插件
+
+启动器「插件」页可管理配置目录 `plugins/` 中的脚本。首个「会话时间」插件为桌面
+Codex 会话列表增加最近更新时间，首次默认开启。修改配置目录内的脚本后点击重新加载，
+无需重新打包。详见 [桌面脚本插件指南](docs/desktop-script-plugins.md)。
+
+## API 与插件规划
+
+桌面程序内部原生服务、可修改能力及插件封装方向见
+[桌面内部 API 能力参考](docs/desktop-internal-api.md)。
+现有启动器 HTTP／WebSocket 接口另见 [网关 API 参考](docs/plugin-api-reference.md)。已提供本地脚本注入与开关；细粒度权限 SDK 和第三方隔离仍是后续规划。
 
 ## 开发与验证
 

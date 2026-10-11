@@ -1,0 +1,2092 @@
+{
+  "desktopVersion": "26.1007.30912",
+  "evidence": "static-only; no live calls",
+  "artifactFiles": [
+    {
+      "path": ".vite/build/bootstrap-CooIJpZm.js",
+      "sha256": "d1ab6d0bb5aabf4d56a3cb39d979dc1145e41b47be6821b967cba3802af3fbf0",
+      "bytes": 461537
+    },
+    {
+      "path": ".vite/build/main-CqEoQDOU.js",
+      "sha256": "09d19386e1f23cf4ccbc950fc40d85a1e8a064a08be588b2a4be6a89f6ada9e6",
+      "bytes": 3824411
+    },
+    {
+      "path": ".vite/build/preload.js",
+      "sha256": "a3e622f8d80a83e58fb3cfcc640fa7e14e6461cccdae9ef7d7b0c821dde256b7",
+      "bytes": 6909
+    },
+    {
+      "path": "webview/assets/app-shared-8bd9d0399038.js",
+      "sha256": "607ad0866dd25ed3764711b4467a9b60708353a599485b5249ff4cbe0e870245",
+      "bytes": 8175575
+    },
+    {
+      "path": ".vite/build/src-BJv5Mk7n.js",
+      "sha256": "72e2b366d574206f76fc079c79b64c31ce378970a797475ded8709908d338f08",
+      "bytes": 1591361
+    },
+    {
+      "path": ".vite/build/startup-requirements-C6B1x9gL.js",
+      "sha256": "73f93b81152bff48cd27bcebcf27c430fb763e5c7418c67824950f4092ba933d",
+      "bytes": 115575
+    }
+  ],
+  "appHostServiceRegistration": {
+    "file": ".vite/build/main-CqEoQDOU.js",
+    "characterOffset": 3327384,
+    "names": [
+      "globalState",
+      "appServerManagers",
+      "httpFetch",
+      "websitePreviews",
+      "pluginIncentives",
+      "appServerLifecycle",
+      "ambientSuggestions",
+      "automations",
+      "applicationMenu",
+      "customRuntime",
+      "appActions",
+      "clientCoordination",
+      "threadReadState",
+      "statsig",
+      "statsigEvaluations",
+      "diamond",
+      "settings",
+      "configSettingsWriteConfirmations",
+      "workModeAccess",
+      "appInfo",
+      "accessInputs",
+      "daybreakPreferences",
+      "cloudTasks",
+      "installerAttribution",
+      "artifactDocuments",
+      "latex",
+      "artifactSessions",
+      "orbPicker",
+      "avatarOverlay",
+      "avatarOverlayScroll",
+      "appUpdates",
+      "realtimeVoiceRuntime",
+      "browserProfileImport",
+      "browserHost",
+      "browserTabs",
+      "browserAutocomplete",
+      "browsingHistory",
+      "debug",
+      "demoTools",
+      "downloads",
+      "dynamicToolCalls",
+      "fileDrags",
+      "tabDragPreview",
+      "detachedWindows",
+      "contentTabs",
+      "hotkeyWindowCommands",
+      "hotkeyWindowHotkeys",
+      "inAppBrowserIncompleteNavigation",
+      "keyboardModifiers",
+      "shortcutCapture",
+      "libraryFiles",
+      "localEnvironments",
+      "managedWorktrees",
+      "deviceStorage",
+      "worktreeComposerEducation",
+      "projects",
+      "projectChatGptProvisioning",
+      "projectFolderConsent",
+      "sshConnectionRegistration",
+      "projectlessWorkspace",
+      "executionPaths",
+      "localThreadCatalog",
+      "localAutomationsScheduler",
+      "appshot",
+      "lsp",
+      "browserUsePermissions",
+      "browserPluginConfig",
+      "conversationalOnboarding",
+      "customAvatars",
+      "fileAttachments",
+      "github",
+      "workspaceFiles",
+      "workspaceSearch",
+      "dictationAudio",
+      "microphoneDiagnostics",
+      "dictationStreaming",
+      "systemAudioSpectrum",
+      "dictationHistory",
+      "owlFeatures",
+      "owlBrowserCrashCounter",
+      "primaryRuntime",
+      "localAutomations",
+      "pluginScheduledTasks",
+      "chromeNativeHost",
+      "chromiumBrowser",
+      "chatGptProjectFiles",
+      "chatGptBrowserSession",
+      "chronicle",
+      "pagesRealtime",
+      "pageCompanionTasks",
+      "performanceTelemetry",
+      "histogramCollector",
+      "pinnedThreads",
+      "processMemory",
+      "clipboard",
+      "computerUseSettings",
+      "textGeneration",
+      "realtimeContinuity",
+      "realtimeMemory",
+      "realtimeVoiceHistory",
+      "realtimeVoiceMultiAgentActivity",
+      "realtimeVoice",
+      "realtimeVoicePresentation",
+      "requestUserInputAutoResolution",
+      "userVerification",
+      "remoteControlEnvironments",
+      "remoteHostedPIP",
+      "startup",
+      "notificationPermissionsSupported",
+      "windowsShell",
+      "systemPermissions",
+      "systemFonts",
+      "terminal",
+      "threadArchive",
+      "threadMetadataGeneration",
+      "threadMetadata",
+      "threadProjectAssignments",
+      "threadTurnSummaries",
+      "triggers",
+      "tracing",
+      "hostedThreadFiles",
+      "environmentConfigs",
+      "localPersonalSecrets",
+      "cumberbatch",
+      "tppLocalExecutor",
+      "mcpAppSandbox",
+      "visualizations",
+      "codexMicro",
+      "notifications",
+      "openIn",
+      "windowNavigation",
+      "spotlight",
+      "pageWindows",
+      "browserAuthOperations",
+      "devboxVncService",
+      "localWebAuthn",
+      "pageCreationIntents",
+      "artifactPageHandoffs",
+      "pullRequestMessageGeneration",
+      "safetyRecourseGeneration"
+    ]
+  },
+  "managerFacade": {
+    "file": ".vite/build/src-BJv5Mk7n.js",
+    "symbol": "vp",
+    "export": "Tr",
+    "members": [
+      {
+        "name": "subscribe",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 258835
+      },
+      {
+        "name": "addConversationHistoryInvalidationListener",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 259260
+      },
+      {
+        "name": "getHostId",
+        "kind": "getter",
+        "params": [],
+        "offset": 259373
+      },
+      {
+        "name": "getWorkInProgress",
+        "kind": "method",
+        "params": [],
+        "offset": 259429
+      },
+      {
+        "name": "getCommandExecutionItemKey",
+        "kind": "getter",
+        "params": [],
+        "offset": 259470
+      },
+      {
+        "name": "getConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 259560
+      },
+      {
+        "name": "getConversationOpeningContext",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 259628
+      },
+      {
+        "name": "getConversationAncestry",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 259870
+      },
+      {
+        "name": "activateThreadSummary",
+        "kind": "getter",
+        "params": [],
+        "offset": 260058
+      },
+      {
+        "name": "ensureConversationFirstPage",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 260138
+      },
+      {
+        "name": "getTurnModelContext",
+        "kind": "getter",
+        "params": [],
+        "offset": 260525
+      },
+      {
+        "name": "getLatestTurnMessages",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 260601
+      },
+      {
+        "name": "getFollowUpContext",
+        "kind": "method",
+        "params": [
+          "e",
+          "t"
+        ],
+        "offset": 260976
+      },
+      {
+        "name": "getCurrentPermissions",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 261547
+      },
+      {
+        "name": "getTurnSandboxPolicy",
+        "kind": "method",
+        "params": [
+          "e",
+          "t"
+        ],
+        "offset": 261634
+      },
+      {
+        "name": "getCachedThreadIds",
+        "kind": "method",
+        "params": [],
+        "offset": 261754
+      },
+      {
+        "name": "getCachedThreadSearchSnapshot",
+        "kind": "method",
+        "params": [],
+        "offset": 261907
+      },
+      {
+        "name": "getCachedConversationMetadata",
+        "kind": "getter",
+        "params": [],
+        "offset": 262518
+      },
+      {
+        "name": "getPastedTextExcerpts",
+        "kind": "getter",
+        "params": [],
+        "offset": 262614
+      },
+      {
+        "name": "getConversationTitleInput",
+        "kind": "getter",
+        "params": [],
+        "offset": 262694
+      },
+      {
+        "name": "getThreadExecutionState",
+        "kind": "getter",
+        "params": [],
+        "offset": 262782
+      },
+      {
+        "name": "getRealtimeCallMetadata",
+        "kind": "getter",
+        "params": [],
+        "offset": 262866
+      },
+      {
+        "name": "readConversationContext",
+        "kind": "getter",
+        "params": [],
+        "offset": 262950
+      },
+      {
+        "name": "supportsThreadTimeline",
+        "kind": "getter",
+        "params": [],
+        "offset": 263034
+      },
+      {
+        "name": "supportsPaginatedThreadHistory",
+        "kind": "getter",
+        "params": [],
+        "offset": 263108
+      },
+      {
+        "name": "readRecentThreadMessages",
+        "kind": "getter",
+        "params": [],
+        "offset": 263206
+      },
+      {
+        "name": "copyEphemeralConversationHistory",
+        "kind": "getter",
+        "params": [],
+        "offset": 263292
+      },
+      {
+        "name": "prefetchSharedThreadTurns",
+        "kind": "getter",
+        "params": [],
+        "offset": 263394
+      },
+      {
+        "name": "getSharedThreadCapabilities",
+        "kind": "getter",
+        "params": [],
+        "offset": 263482
+      },
+      {
+        "name": "loadBackgroundThreadHistoryPage",
+        "kind": "getter",
+        "params": [],
+        "offset": 263581
+      },
+      {
+        "name": "getConversationCwd",
+        "kind": "getter",
+        "params": [],
+        "offset": 263681
+      },
+      {
+        "name": "getStreamRole",
+        "kind": "getter",
+        "params": [],
+        "offset": 263755
+      },
+      {
+        "name": "isConversationArchiving",
+        "kind": "getter",
+        "params": [],
+        "offset": 263819
+      },
+      {
+        "name": "readThread",
+        "kind": "getter",
+        "params": [],
+        "offset": 263903
+      },
+      {
+        "name": "listThreadTurns",
+        "kind": "getter",
+        "params": [],
+        "offset": 263961
+      },
+      {
+        "name": "getThreadWritableRoots",
+        "kind": "getter",
+        "params": [],
+        "offset": 264029
+      },
+      {
+        "name": "getWorkspacesRoot",
+        "kind": "getter",
+        "params": [],
+        "offset": 264111
+      },
+      {
+        "name": "getCodexHome",
+        "kind": "getter",
+        "params": [],
+        "offset": 264183
+      },
+      {
+        "name": "updateThreadPermissions",
+        "kind": "getter",
+        "params": [],
+        "offset": 264245
+      },
+      {
+        "name": "discardConversationIfEmpty",
+        "kind": "getter",
+        "params": [],
+        "offset": 264329
+      },
+      {
+        "name": "getAccount",
+        "kind": "getter",
+        "params": [],
+        "offset": 264419
+      },
+      {
+        "name": "getAuthMethod",
+        "kind": "getter",
+        "params": [],
+        "offset": 264477
+      },
+      {
+        "name": "getDynamicToolRequest",
+        "kind": "getter",
+        "params": [],
+        "offset": 264541
+      },
+      {
+        "name": "getTurnCoordinator",
+        "kind": "getter",
+        "params": [],
+        "offset": 264621
+      },
+      {
+        "name": "registerWindowActivity",
+        "kind": "getter",
+        "params": [],
+        "offset": 264711
+      },
+      {
+        "name": "retainActiveConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 264793
+      },
+      {
+        "name": "createChatGptLoginSession",
+        "kind": "getter",
+        "params": [],
+        "offset": 264879
+      },
+      {
+        "name": "createChatGptDeviceCodeLoginSession",
+        "kind": "getter",
+        "params": [],
+        "offset": 264967
+      },
+      {
+        "name": "createGatewayOAuthLoginSession",
+        "kind": "getter",
+        "params": [],
+        "offset": 265075
+      },
+      {
+        "name": "createWindowsSandboxSetupSession",
+        "kind": "getter",
+        "params": [],
+        "offset": 265165
+      },
+      {
+        "name": "sendRequest",
+        "kind": "getter",
+        "params": [],
+        "offset": 265267
+      },
+      {
+        "name": "readSerializedConfig",
+        "kind": "method",
+        "params": [
+          "e",
+          "t"
+        ],
+        "offset": 265327
+      },
+      {
+        "name": "prepareThreadStart",
+        "kind": "getter",
+        "params": [],
+        "offset": 265419
+      },
+      {
+        "name": "startConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 265493
+      },
+      {
+        "name": "resumeConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 265565
+      },
+      {
+        "name": "resumeThread",
+        "kind": "getter",
+        "params": [],
+        "offset": 265639
+      },
+      {
+        "name": "startTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 265701
+      },
+      {
+        "name": "startTurnWithOutcome",
+        "kind": "method",
+        "params": [
+          "e",
+          "t"
+        ],
+        "offset": 265757
+      },
+      {
+        "name": "startEmptyTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 265948
+      },
+      {
+        "name": "steerTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 266014
+      },
+      {
+        "name": "sendFollowUpMessage",
+        "kind": "getter",
+        "params": [],
+        "offset": 266070
+      },
+      {
+        "name": "editLastUserTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 266146
+      },
+      {
+        "name": "stopThread",
+        "kind": "getter",
+        "params": [],
+        "offset": 266216
+      },
+      {
+        "name": "interruptConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 266274
+      },
+      {
+        "name": "interruptSubagentDescendants",
+        "kind": "getter",
+        "params": [],
+        "offset": 266354
+      },
+      {
+        "name": "retrySafetyBufferedTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 266448
+      },
+      {
+        "name": "compactThread",
+        "kind": "getter",
+        "params": [],
+        "offset": 266532
+      },
+      {
+        "name": "cleanBackgroundTerminals",
+        "kind": "getter",
+        "params": [],
+        "offset": 266596
+      },
+      {
+        "name": "forkConversationFromLatest",
+        "kind": "getter",
+        "params": [],
+        "offset": 266682
+      },
+      {
+        "name": "forkConversationFromTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 266772
+      },
+      {
+        "name": "finishPullRequestFixForkSetup",
+        "kind": "getter",
+        "params": [],
+        "offset": 266858
+      },
+      {
+        "name": "archiveConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 266954
+      },
+      {
+        "name": "unarchiveConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 267030
+      },
+      {
+        "name": "deleteArchivedConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 267110
+      },
+      {
+        "name": "deleteAllArchivedConversations",
+        "kind": "getter",
+        "params": [],
+        "offset": 267200
+      },
+      {
+        "name": "discardConversationFromCache",
+        "kind": "getter",
+        "params": [],
+        "offset": 267298
+      },
+      {
+        "name": "unsubscribeInactiveConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 267392
+      },
+      {
+        "name": "setThreadTitle",
+        "kind": "getter",
+        "params": [],
+        "offset": 267492
+      },
+      {
+        "name": "setThreadStartKind",
+        "kind": "getter",
+        "params": [],
+        "offset": 267558
+      },
+      {
+        "name": "updateThreadGitBranch",
+        "kind": "getter",
+        "params": [],
+        "offset": 267632
+      },
+      {
+        "name": "setThreadGoal",
+        "kind": "getter",
+        "params": [],
+        "offset": 267712
+      },
+      {
+        "name": "setThreadGoalStatus",
+        "kind": "getter",
+        "params": [],
+        "offset": 267776
+      },
+      {
+        "name": "clearThreadGoal",
+        "kind": "getter",
+        "params": [],
+        "offset": 267852
+      },
+      {
+        "name": "clearThreadGoalResumeConfirmation",
+        "kind": "getter",
+        "params": [],
+        "offset": 267920
+      },
+      {
+        "name": "updateThreadSettingsForNextTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 268024
+      },
+      {
+        "name": "runThreadModelSettingsUpdate",
+        "kind": "getter",
+        "params": [],
+        "offset": 268124
+      },
+      {
+        "name": "updateThreadDaybreakEnabled",
+        "kind": "getter",
+        "params": [],
+        "offset": 268218
+      },
+      {
+        "name": "markConversationAsRead",
+        "kind": "getter",
+        "params": [],
+        "offset": 268310
+      },
+      {
+        "name": "markConversationAsUnread",
+        "kind": "getter",
+        "params": [],
+        "offset": 268392
+      },
+      {
+        "name": "recordAeonAssistantMessageDelivery",
+        "kind": "getter",
+        "params": [],
+        "offset": 268478
+      },
+      {
+        "name": "setDefaultModelConfig",
+        "kind": "getter",
+        "params": [],
+        "offset": 268584
+      },
+      {
+        "name": "setDefaultServiceTierConfig",
+        "kind": "getter",
+        "params": [],
+        "offset": 268664
+      },
+      {
+        "name": "loginWithApiKey",
+        "kind": "getter",
+        "params": [],
+        "offset": 268756
+      },
+      {
+        "name": "logout",
+        "kind": "getter",
+        "params": [],
+        "offset": 268824
+      },
+      {
+        "name": "listMcpServers",
+        "kind": "getter",
+        "params": [],
+        "offset": 268874
+      },
+      {
+        "name": "callMcpTool",
+        "kind": "getter",
+        "params": [],
+        "offset": 268940
+      },
+      {
+        "name": "replyWithCommandExecutionApprovalDecision",
+        "kind": "getter",
+        "params": [],
+        "offset": 269000
+      },
+      {
+        "name": "replyWithFileChangeApprovalDecision",
+        "kind": "getter",
+        "params": [],
+        "offset": 269120
+      },
+      {
+        "name": "replyWithPermissionsRequestApprovalResponse",
+        "kind": "getter",
+        "params": [],
+        "offset": 269228
+      },
+      {
+        "name": "replyWithUserInputResponse",
+        "kind": "getter",
+        "params": [],
+        "offset": 269352
+      },
+      {
+        "name": "replyWithOptionPickerResponse",
+        "kind": "getter",
+        "params": [],
+        "offset": 269442
+      },
+      {
+        "name": "replyWithDynamicToolResponse",
+        "kind": "getter",
+        "params": [],
+        "offset": 269538
+      },
+      {
+        "name": "beginUserVerification",
+        "kind": "getter",
+        "params": [],
+        "offset": 269632
+      },
+      {
+        "name": "replyWithMcpServerElicitationResponse",
+        "kind": "getter",
+        "params": [],
+        "offset": 269712
+      },
+      {
+        "name": "handleThreadFollowerRequest",
+        "kind": "getter",
+        "params": [],
+        "offset": 269824
+      },
+      {
+        "name": "refreshRecentConversations",
+        "kind": "method",
+        "params": [
+          "...e"
+        ],
+        "offset": 269916
+      },
+      {
+        "name": "hydratePinnedThreads",
+        "kind": "getter",
+        "params": [],
+        "offset": 270049
+      },
+      {
+        "name": "hydrateBackgroundThreads",
+        "kind": "getter",
+        "params": [],
+        "offset": 270127
+      },
+      {
+        "name": "hydrateArchivedThreadPreview",
+        "kind": "getter",
+        "params": [],
+        "offset": 270213
+      },
+      {
+        "name": "loadRecentConversationIds",
+        "kind": "getter",
+        "params": [],
+        "offset": 270307
+      },
+      {
+        "name": "searchThreads",
+        "kind": "getter",
+        "params": [],
+        "offset": 270395
+      },
+      {
+        "name": "ensureConversationHistoryLoaded",
+        "kind": "getter",
+        "params": [],
+        "offset": 270459
+      },
+      {
+        "name": "loadOlderConversationHistoryPage",
+        "kind": "getter",
+        "params": [],
+        "offset": 270559
+      },
+      {
+        "name": "loadRemainingTurnItems",
+        "kind": "getter",
+        "params": [],
+        "offset": 270661
+      },
+      {
+        "name": "loadOlderConversationTurnsPage",
+        "kind": "getter",
+        "params": [],
+        "offset": 270743
+      },
+      {
+        "name": "loadConversationHistoryBoundaryPage",
+        "kind": "getter",
+        "params": [],
+        "offset": 270841
+      },
+      {
+        "name": "hydrateConversationSearchMatch",
+        "kind": "getter",
+        "params": [],
+        "offset": 270949
+      },
+      {
+        "name": "getSubagentDescendantSnapshot",
+        "kind": "getter",
+        "params": [],
+        "offset": 271047
+      },
+      {
+        "name": "discoverSubagentDescendantSnapshot",
+        "kind": "getter",
+        "params": [],
+        "offset": 271143
+      },
+      {
+        "name": "setPinnedThreadIds",
+        "kind": "getter",
+        "params": [],
+        "offset": 271249
+      },
+      {
+        "name": "observeCatalogThreads",
+        "kind": "getter",
+        "params": [],
+        "offset": 271323
+      },
+      {
+        "name": "getThreadListSummary",
+        "kind": "method",
+        "params": [
+          "e"
+        ],
+        "offset": 271403
+      },
+      {
+        "name": "getCachedThreadMetadata",
+        "kind": "getter",
+        "params": [],
+        "offset": 271523
+      },
+      {
+        "name": "prewarmConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 271607
+      },
+      {
+        "name": "prewarmCloudConversation",
+        "kind": "getter",
+        "params": [],
+        "offset": 271683
+      },
+      {
+        "name": "clearPrewarmedThreads",
+        "kind": "getter",
+        "params": [],
+        "offset": 271769
+      },
+      {
+        "name": "markAllConversationsNeedResumeAfterReconnect",
+        "kind": "getter",
+        "params": [],
+        "offset": 271849
+      },
+      {
+        "name": "addCloudTaskSyntheticItem",
+        "kind": "getter",
+        "params": [],
+        "offset": 271975
+      },
+      {
+        "name": "addWorktreeInitSyntheticTurn",
+        "kind": "getter",
+        "params": [],
+        "offset": 272063
+      },
+      {
+        "name": "removePlanImplementationRequest",
+        "kind": "getter",
+        "params": [],
+        "offset": 272157
+      },
+      {
+        "name": "uploadLocalFileAttachments",
+        "kind": "getter",
+        "params": [],
+        "offset": 272257
+      },
+      {
+        "name": "createFileAttachment",
+        "kind": "getter",
+        "params": [],
+        "offset": 272347
+      },
+      {
+        "name": "copyLocalFileAttachment",
+        "kind": "getter",
+        "params": [],
+        "offset": 272425
+      },
+      {
+        "name": "createPastedTextAttachment",
+        "kind": "getter",
+        "params": [],
+        "offset": 272509
+      },
+      {
+        "name": "removePastedTextAttachment",
+        "kind": "getter",
+        "params": [],
+        "offset": 272599
+      },
+      {
+        "name": "createThreadGoalAttachmentDirectory",
+        "kind": "getter",
+        "params": [],
+        "offset": 272689
+      },
+      {
+        "name": "writeThreadGoalAttachment",
+        "kind": "getter",
+        "params": [],
+        "offset": 272797
+      },
+      {
+        "name": "removeThreadGoalAttachmentDirectory",
+        "kind": "getter",
+        "params": [],
+        "offset": 272885
+      },
+      {
+        "name": "setOpenReviewFileSourceTabs",
+        "kind": "getter",
+        "params": [],
+        "offset": 272993
+      },
+      {
+        "name": "setOpenFileTabs",
+        "kind": "getter",
+        "params": [],
+        "offset": 273111
+      },
+      {
+        "name": "[Symbol.dispose]",
+        "kind": "method",
+        "params": [],
+        "offset": 273205
+      },
+      {
+        "name": "ignoreOpenFileChangeEvents",
+        "kind": "getter",
+        "params": [],
+        "offset": 273292
+      },
+      {
+        "name": "setOpenMcpResources",
+        "kind": "getter",
+        "params": [],
+        "offset": 273388
+      },
+      {
+        "name": "collectAppStateMetrics",
+        "kind": "getter",
+        "params": [],
+        "offset": 273464
+      }
+    ]
+  },
+  "selectedServices": {
+    "pc": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 177164,
+      "members": [
+        {
+          "name": "syncAfterPluginChange",
+          "kind": "method",
+          "params": [],
+          "offset": 177272
+        }
+      ]
+    },
+    "Kde": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 706662,
+      "members": [
+        {
+          "name": "readAccountInfo",
+          "kind": "method",
+          "params": [
+            "e=!1"
+          ],
+          "offset": 707300
+        },
+        {
+          "name": "publishChatGptRequestProfile",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 707377
+        },
+        {
+          "name": "readAccounts",
+          "kind": "method",
+          "params": [
+            "e",
+            "t=!1"
+          ],
+          "offset": 708067
+        },
+        {
+          "name": "readWorkspaceSettings",
+          "kind": "method",
+          "params": [
+            "e",
+            "t=!1"
+          ],
+          "offset": 708262
+        },
+        {
+          "name": "invalidateWorkspaceSettings",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 708508
+        },
+        {
+          "name": "invalidate",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 708768
+        },
+        {
+          "name": "subscribe",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 709022
+        }
+      ]
+    },
+    "jfe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 751039,
+      "members": [
+        {
+          "name": "open",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 751094
+        },
+        {
+          "name": "subscribe",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 751260
+        }
+      ]
+    },
+    "ppe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 761665,
+      "members": [
+        {
+          "name": "handlePrincipalChanged",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 762125
+        },
+        {
+          "name": "getState",
+          "kind": "method",
+          "params": [],
+          "offset": 762489
+        },
+        {
+          "name": "migrate",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 763554
+        },
+        {
+          "name": "decline",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 766337
+        },
+        {
+          "name": "list",
+          "kind": "method",
+          "params": [],
+          "offset": 766832
+        },
+        {
+          "name": "isMigrationInProgress",
+          "kind": "method",
+          "params": [],
+          "offset": 766853
+        },
+        {
+          "name": "getMigrationOwner",
+          "kind": "method",
+          "params": [],
+          "offset": 766912
+        },
+        {
+          "name": "getHostedInstallationId",
+          "kind": "method",
+          "params": [],
+          "offset": 767069
+        },
+        {
+          "name": "isLocalMigrationActive",
+          "kind": "method",
+          "params": [],
+          "offset": 767141
+        },
+        {
+          "name": "sync",
+          "kind": "method",
+          "params": [],
+          "offset": 767302
+        },
+        {
+          "name": "create",
+          "kind": "method",
+          "params": [
+            "e",
+            "t=[]"
+          ],
+          "offset": 767481
+        },
+        {
+          "name": "update",
+          "kind": "method",
+          "params": [
+            "e",
+            "t=[]"
+          ],
+          "offset": 767895
+        },
+        {
+          "name": "delete",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 768376
+        },
+        {
+          "name": "deleteArchivedHeartbeat",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 768762
+        },
+        {
+          "name": "state",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 769187
+        },
+        {
+          "name": "enqueue",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 769407
+        },
+        {
+          "name": "getPersistedStatus",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 769518
+        },
+        {
+          "name": "persistStatus",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 769664
+        },
+        {
+          "name": "getCurrentOwner",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 769946
+        },
+        {
+          "name": "getActiveOwner",
+          "kind": "method",
+          "params": [],
+          "offset": 770369
+        },
+        {
+          "name": "usableOwner",
+          "kind": "getter",
+          "params": [],
+          "offset": 770521
+        },
+        {
+          "name": "checkOwner",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 770629
+        },
+        {
+          "name": "readEnrollment",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 770907
+        },
+        {
+          "name": "writeEnrollment",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 771230
+        },
+        {
+          "name": "syncOwner",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 771665
+        },
+        {
+          "name": "saveAndVerify",
+          "kind": "method",
+          "params": [
+            "e",
+            "t",
+            "n",
+            "r"
+          ],
+          "offset": 772649
+        },
+        {
+          "name": "request",
+          "kind": "method",
+          "params": [
+            "e",
+            "t",
+            "r",
+            "i",
+            "a"
+          ],
+          "offset": 773767
+        }
+      ]
+    },
+    "xS": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 872588,
+      "members": []
+    },
+    "rC": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 899409,
+      "members": [
+        {
+          "name": "read",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 900114
+        },
+        {
+          "name": "subscribe",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 900455
+        }
+      ]
+    },
+    "$Me": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 2125716,
+      "members": [
+        {
+          "name": "createDirectory",
+          "kind": "method",
+          "params": [
+            "{hostId:e,path:t}"
+          ],
+          "offset": 2125979
+        },
+        {
+          "name": "dispose",
+          "kind": "method",
+          "params": [],
+          "offset": 2126126
+        },
+        {
+          "name": "createTemporaryFile",
+          "kind": "method",
+          "params": [
+            "{bytes:e,fileName:t}"
+          ],
+          "offset": 2126299
+        },
+        {
+          "name": "downloadCopy",
+          "kind": "method",
+          "params": [
+            "{fileName:e,hostId:t,path:n}"
+          ],
+          "offset": 2126794
+        },
+        {
+          "name": "getDownloadsFolderIcon",
+          "kind": "method",
+          "params": [],
+          "offset": 2127283
+        },
+        {
+          "name": "getMetadata",
+          "kind": "method",
+          "params": [
+            "{hostId:e,path:t,includeCanonicalPath:n}"
+          ],
+          "offset": 2127491
+        },
+        {
+          "name": "getThumbnailDataUrl",
+          "kind": "getter",
+          "params": [],
+          "offset": 2127823
+        },
+        {
+          "name": "read",
+          "kind": "method",
+          "params": [
+            "{hostId:e,maxBytes:t,path:n,representation:r}"
+          ],
+          "offset": 2130268
+        },
+        {
+          "name": "releaseTemporaryFile",
+          "kind": "method",
+          "params": [
+            "{path:e}"
+          ],
+          "offset": 2131162
+        },
+        {
+          "name": "saveCopy",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2131286
+        },
+        {
+          "name": "write",
+          "kind": "method",
+          "params": [
+            "{bytes:e,hostId:t,ifMatch:n,path:r}"
+          ],
+          "offset": 2131927
+        }
+      ]
+    },
+    "uPe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 2173229,
+      "members": [
+        {
+          "name": "list",
+          "kind": "method",
+          "params": [
+            "{hostId:e,workspaceRoot:t}"
+          ],
+          "offset": 2173322
+        },
+        {
+          "name": "read",
+          "kind": "method",
+          "params": [
+            "{configPath:e,hostId:t}"
+          ],
+          "offset": 2173437
+        },
+        {
+          "name": "saveConfig",
+          "kind": "method",
+          "params": [
+            "{configPath:e,expectedRevision:t,hostId:n,raw:a}"
+          ],
+          "offset": 2173548
+        }
+      ]
+    },
+    "cIe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 2387806,
+      "members": [
+        {
+          "name": "registerThreadArchive",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,cwd:n,cleanupWorktree:r}"
+          ],
+          "offset": 2388976
+        },
+        {
+          "name": "registerThreadUnarchive",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t}"
+          ],
+          "offset": 2389142
+        },
+        {
+          "name": "createForThread",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2390242
+        },
+        {
+          "name": "removeFromThread",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,root:n,pullRequestIdentityKeys:i,fromModel:a,callingThreadId:o=t}"
+          ],
+          "offset": 2392417
+        },
+        {
+          "name": "archiveForThread",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2394612
+        },
+        {
+          "name": "restoreForThread",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,root:n}"
+          ],
+          "offset": 2394802
+        },
+        {
+          "name": "getPendingArchives",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t}"
+          ],
+          "offset": 2396281
+        },
+        {
+          "name": "getCreationStatus",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,operationId:n}"
+          ],
+          "offset": 2398279
+        },
+        {
+          "name": "subscribeToCreation",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 2398451
+        },
+        {
+          "name": "getOwnerThreadId",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,root:n}"
+          ],
+          "offset": 2405861
+        }
+      ]
+    },
+    "qHe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 2634324,
+      "members": [
+        {
+          "name": "isLocalProjectMissing",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 2634724
+        },
+        {
+          "name": "getProjectStorageCapabilities",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2635270
+        },
+        {
+          "name": "getLocalProjects",
+          "kind": "method",
+          "params": [],
+          "offset": 2635375
+        },
+        {
+          "name": "withLocalProject",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 2635422
+        },
+        {
+          "name": "setProjectBackend",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2635591
+        },
+        {
+          "name": "getRemoteProjects",
+          "kind": "method",
+          "params": [],
+          "offset": 2635634
+        },
+        {
+          "name": "getProjectAppearances",
+          "kind": "method",
+          "params": [],
+          "offset": 2635708
+        },
+        {
+          "name": "setProjectOrder",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2635792
+        },
+        {
+          "name": "getProjectRootPathsForHost",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2636618
+        },
+        {
+          "name": "getLocalWorkspaceRootOptionsSync",
+          "kind": "method",
+          "params": [],
+          "offset": 2636711
+        },
+        {
+          "name": "getWorkspaceRootOptions",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2636917
+        },
+        {
+          "name": "createOrSelectLocalProjects",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2637189
+        },
+        {
+          "name": "hasProjectNamed",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2637743
+        },
+        {
+          "name": "createProjectForRoot",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 2637835
+        },
+        {
+          "name": "createLocal",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2639088
+        },
+        {
+          "name": "editLocal",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2639834
+        },
+        {
+          "name": "ensureChatGptLocalProject",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2640387
+        },
+        {
+          "name": "updateLinkedProjectThreadOrder",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2642415
+        },
+        {
+          "name": "removeLocal",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2643042
+        },
+        {
+          "name": "setChatGptBacking",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2645141
+        },
+        {
+          "name": "renameLocal",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2647067
+        },
+        {
+          "name": "upsertLocal",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 2647356
+        },
+        {
+          "name": "createRemote",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2649818
+        },
+        {
+          "name": "editRemote",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2650884
+        },
+        {
+          "name": "removeRemote",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2651348
+        },
+        {
+          "name": "renameRemote",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2651867
+        },
+        {
+          "name": "upsertRemote",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2652223
+        },
+        {
+          "name": "setAppearance",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2652511
+        },
+        {
+          "name": "assignUnassignedThreadsBeforeProjectRootsChange",
+          "kind": "method",
+          "params": [
+            "e",
+            "{excludedThreadIds:t=new Set,matchRootsByCanonicalHostIdentity:n=!1}={}"
+          ],
+          "offset": 2652920
+        },
+        {
+          "name": "getLocalProjectsForRenderer",
+          "kind": "method",
+          "params": [],
+          "offset": 2653330
+        },
+        {
+          "name": "getLocalProjectsForDesktopState",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 2653492
+        }
+      ]
+    },
+    "aqe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 3119417,
+      "members": [
+        {
+          "name": "previewSound",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 3119621
+        },
+        {
+          "name": "importSound",
+          "kind": "method",
+          "params": [
+            "{title:e,decodeAudio:t}"
+          ],
+          "offset": 3120260
+        },
+        {
+          "name": "show",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 3122700
+        },
+        {
+          "name": "hide",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3123909
+        }
+      ]
+    },
+    "qqe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 3147915,
+      "members": [
+        {
+          "name": "attach",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148155
+        },
+        {
+          "name": "attachExisting",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148247
+        },
+        {
+          "name": "close",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148329
+        },
+        {
+          "name": "create",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148380
+        },
+        {
+          "name": "getAvailableShells",
+          "kind": "method",
+          "params": [],
+          "offset": 3148690
+        },
+        {
+          "name": "getShellCwd",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 3148724
+        },
+        {
+          "name": "getThreadSnapshot",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148804
+        },
+        {
+          "name": "transferSessionOwnership",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3148900
+        },
+        {
+          "name": "resize",
+          "kind": "method",
+          "params": [
+            "e",
+            "t",
+            "n",
+            "r"
+          ],
+          "offset": 3149002
+        },
+        {
+          "name": "runAction",
+          "kind": "method",
+          "params": [
+            "e",
+            "t",
+            "n"
+          ],
+          "offset": 3149067
+        },
+        {
+          "name": "subscribe",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3149148
+        },
+        {
+          "name": "unsubscribe",
+          "kind": "method",
+          "params": [],
+          "offset": 3149396
+        },
+        {
+          "name": "write",
+          "kind": "method",
+          "params": [
+            "e",
+            "t"
+          ],
+          "offset": 3149520
+        },
+        {
+          "name": "[Symbol.dispose]",
+          "kind": "method",
+          "params": [],
+          "offset": 3149575
+        }
+      ]
+    },
+    "iJe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 3166316,
+      "members": [
+        {
+          "name": "archiveInactiveThread",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t,removeCatalogEntryIfMissing:n,discardProvisionalThread:a}"
+          ],
+          "offset": 3166586
+        },
+        {
+          "name": "deleteArchivedThread",
+          "kind": "method",
+          "params": [
+            "{hostId:e,threadId:t}"
+          ],
+          "offset": 3168065
+        },
+        {
+          "name": "deleteAllArchivedThreads",
+          "kind": "method",
+          "params": [
+            "{hostId:e}"
+          ],
+          "offset": 3168270
+        }
+      ]
+    },
+    "pXe": {
+      "file": "main-CqEoQDOU.js",
+      "offset": 3296335,
+      "members": [
+        {
+          "name": "search",
+          "kind": "method",
+          "params": [
+            "e"
+          ],
+          "offset": 3296492
+        },
+        {
+          "name": "dispose",
+          "kind": "method",
+          "params": [],
+          "offset": 3297558
+        }
+      ]
+    }
+  }
+}

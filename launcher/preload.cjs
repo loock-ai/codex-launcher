@@ -1,5 +1,6 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('launcher',{
+ listPlugins:()=>ipcRenderer.invoke('launcher:plugins:list'),setPluginEnabled:(id,enabled)=>ipcRenderer.invoke('launcher:plugins:enable',id,enabled),reloadPlugins:()=>ipcRenderer.invoke('launcher:plugins:reload'),openPluginsFolder:()=>ipcRenderer.invoke('launcher:plugins:open-folder'),
  getStatus:()=>ipcRenderer.invoke('launcher:status'),
  saveConfig:config=>ipcRenderer.invoke('launcher:save',config),
  start:()=>ipcRenderer.invoke('launcher:start'),stop:()=>ipcRenderer.invoke('launcher:stop'),

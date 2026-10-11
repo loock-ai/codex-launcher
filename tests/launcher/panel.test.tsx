@@ -52,3 +52,13 @@ it('二维码默认收起，点击展开并可收回，重启直接交给启动�
  fireEvent.click(screen.getByRole('button',{name:'收起二维码'}));expect(screen.queryByRole('img',{name:'手机连接二维码'})).toBeNull();
  fireEvent.click(screen.getByRole('button',{name:'强制重启 ChatGPT'}));await waitFor(()=>expect(restart).toHaveBeenCalledOnce());
 });
+it('插件页列出配置目录脚本并管理启用和重新加载',async()=>{
+ const status:any={config:defaultConfig(),running:true,phase:'已启动',error:'',clients:0,approvals:0,thread:'',accessUrl:null,logs:[]};
+ const snapshot:any={directory:'/fixture/config/plugins',plugins:[{id:'desktop-thread-time',name:'会话时间',description:'显示最近更新时间',version:'1.0.0',enabled:false,state:'inactive',path:'/fixture/config/plugins/desktop-thread-time'}]};
+ const api:any={getStatus:async()=>status,subscribe:()=>()=>{},listPlugins:vi.fn(async()=>snapshot),setPluginEnabled:vi.fn(async(id:string,enabled:boolean)=>({...snapshot,plugins:[{...snapshot.plugins[0],enabled,state:'active'}]})),reloadPlugins:vi.fn(async()=>snapshot),openPluginsFolder:vi.fn(async()=>{})};
+ render(<LauncherPanel api={api}/>);fireEvent.click(await screen.findByRole('button',{name:'插件'}));
+ await screen.findByText('会话时间');expect(screen.getByText('/fixture/config/plugins')).toBeTruthy();
+ fireEvent.click(screen.getByRole('checkbox',{name:'启用 会话时间'}));await waitFor(()=>expect(api.setPluginEnabled).toHaveBeenCalledWith('desktop-thread-time',true));await screen.findByText('已注入');
+ fireEvent.click(screen.getByRole('button',{name:'重新加载脚本'}));await waitFor(()=>expect(api.reloadPlugins).toHaveBeenCalledOnce());
+ fireEvent.click(screen.getByRole('button',{name:'打开插件目录'}));await waitFor(()=>expect(api.openPluginsFolder).toHaveBeenCalledOnce());
+});
