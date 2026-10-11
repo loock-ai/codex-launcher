@@ -65,5 +65,5 @@ app.whenReady().then(()=>{
  window.received=[];window.addEventListener('message',event=>{const m=event.data;if(m?.type==='mcp-notification'){window.received.push(m);if(m.method==='item/started'&&m.params.item.type==='userMessage')document.querySelector('main').textContent+=m.params.item.content[0].text;if(m.method==='item/agentMessage/delta')document.querySelector('main').textContent+=m.params.delta;}});
  </script>`,{headers:{'content-type':'text/html; charset=utf-8'}});});
  mainWindow=new BrowserWindow({show:false,webPreferences:{preload:path.join(__dirname,'control-preload.cjs'),contextIsolation:true,nodeIntegration:false}});mainWindow.loadURL('app://-/index.html');
- phoneWindow=new BrowserWindow({show:false,webPreferences:{contextIsolation:true,nodeIntegration:false}});phoneWindow.loadURL('about:blank');
+ phoneWindow=new BrowserWindow({show:false,webPreferences:{contextIsolation:true,nodeIntegration:false}});phoneWindow.webContents.setUserAgent(process.env.CDP_FIXTURE_PHONE_UA||'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1');phoneWindow.loadURL('about:blank');
 });
