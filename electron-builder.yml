@@ -8,6 +8,7 @@ files:
   - launcher/main.cjs
   - launcher/commands.cjs
   - launcher/preload.cjs
+  - launcher/plugin-protocol.cjs
   - launcher-ui/**
   - plugins/**
   - npm-dist/**

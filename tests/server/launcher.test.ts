@@ -40,21 +40,6 @@ describe('启动器配置', () => {
   });
 });
 
-import { LauncherController } from '../../server/launcher/controller.js';
-it('启动器拒绝在服务运行时覆盖配置，停止仅关闭自己的服务',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'launcher-control-'));let starts=0,stops=0;
- const controller=new LauncherController(join(dir,'config.json'),'/fixture',{
-  start:async()=>{starts++;return {port:19901,close:async()=>{stops++}}},
-  desktopRunning:async()=>false,
-  openDesktop:async()=>{},
- });
- await controller.initialize();
- await controller.save({...defaultConfig(),mode:'managed',gatewayPort:19901});
- await controller.start();await controller.start();expect(starts).toBe(1);
- await expect(controller.save(defaultConfig())).rejects.toThrow('停止');
- await controller.stop();await controller.stop();expect(stops).toBe(1);expect(controller.status().running).toBe(false);
-});
-
 import {writeFile,mkdir,rm} from 'node:fs/promises';
 import {discoverDesktopCli} from '../../server/launcher/config.js';
 it('CLI 从所选 Desktop 安装包布局查找，不回退全局 PATH',async()=>{
@@ -62,15 +47,6 @@ it('CLI 从所选 Desktop 安装包布局查找，不回退全局 PATH',async()=
  await mkdir(join(resources,'bin'),{recursive:true});await writeFile(join(resources,'codex-package.json'),JSON.stringify({layoutVersion:1,entrypoint:'bin/codex'}));await writeFile(join(resources,'bin/codex'),'#!/bin/sh\nexit 0\n',{mode:0o700});
  expect(discoverDesktopCli(app)).toBe(join(resources,'bin/codex'));
  expect(()=>discoverDesktopCli(join(dir,'Missing.app'))).toThrow('Desktop');
-});
-it('强制重启不依赖桌面快照或确认，先停桥接再终止并启用 CDP',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'launcher-force-'));const events:string[]=[];
- const controller=new LauncherController(join(dir,'config.json'),'/fixture',{
-  start:async()=>{events.push('start');return {port:19901,close:async()=>{events.push('close')}}},
-  desktopRunning:async()=>true,
-  forceStopDesktop:async()=>{events.push('kill')},launchDebugDesktop:async()=>{events.push('launch')},debugReady:async()=>true,
- } as any);
- try{await controller.initialize();await controller.start();events.length=0;await controller.restartDesktop();expect(events).toEqual(['close','kill','launch','start']);expect(controller.status().running).toBe(true);}finally{await controller.stop();await rm(dir,{recursive:true,force:true});}
 });
 import {desktopProcessIds} from '../../server/launcher/desktop-process.js';
 it('强制终止仅匹配配置安装包的准确主进程路径',()=>{

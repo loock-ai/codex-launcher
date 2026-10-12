@@ -4,7 +4,7 @@
 
 更新日期：2026-10-12。范围：当前源码中的 `desktop-control`（CDP 桌面连接）与 Dots 适配。核对基于当前工作树，包含尚未提交的改动；不代表 npm 已发布版本或所有已安装应用包的能力。
 
-本文先列出**现在可以调用的 API**，再说明如何把它们封装为可由启动器开启、关闭的插件。当前已实现配置目录脚本的发现、加载、启停和重新加载，见 [桌面脚本插件](desktop-script-plugins.md)。细粒度权限授予与插件 SDK **尚未实现**；后文标为“设计建议”的接口不能直接调用。
+本文先列出**现在可以调用的 API**，再说明如何把它们封装为可由启动器开启、关闭的插件。当前已实现配置目录脚本的发现、加载、启停和重新加载，见 [桌面脚本插件](desktop-script-plugins.md)。统一后台、UI 和注入运行器现已实现，见 [启动器插件 SDK](launcher-plugin-sdk.md)。细粒度权限授予尚未实现；后文历史“设计建议”仍以新 SDK 文档为准。
 
 ## 1. 当前能力总览
 
@@ -26,7 +26,7 @@
 ```mermaid
 flowchart LR
     W["现有 Web / 外部程序"] -->|"Token + HTTP / WebSocket"| G["desktop-control 网关"]
-    L["本机启动器面板"] -->|"受限 Electron IPC"| C["LauncherController"]
+    L["本机启动器面板"] -->|"Tauri IPC / Node sidecar"| C["LauncherController"]
     C --> G
     G -->|"本机 CDP"| D["桌面既有 Electron / AppHost 服务"]
     D --> H["本机或远程 Codex 主机"]
@@ -34,7 +34,7 @@ flowchart LR
 ```
 
 - **网关 HTTP / WebSocket**：现有 Web 和程序可调用；是未来插件业务 API 的主要来源。
-- **启动器 IPC**：仅启动器自己的主框架可调用，校验 `webContents` 和 `senderFrame`。不能把 `window.launcher` 当作任意网页或插件现成可用的 API。
+- **启动器 IPC**：Tauri 主窗口经白名单 IPC 调用 Node 后台，插件页面通过父框架绑定身份转发；Electron 回退入口校验 `webContents` 和 `senderFrame`。不能把 `window.launcher` 当作任意网页或插件现成可用的 API。
 - **桌面内部接口**：由适配层使用，不作为稳定插件契约。插件不应直接操作 CDP、动态导入桌面模块或获取账户凭据。
 
 原 `managed` / `external` app-server 模式有另一套透传行为，不能将其能力自动算到 CDP 模式上；参见 [原 app-server 指南](app-server-guide.md)。

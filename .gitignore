@@ -8,3 +8,17 @@ playwright-report/
 
 launcher-ui/
 launcher-release/
+
+# Mobile 插件构建产物
+plugins/mobile/main.cjs
+plugins/mobile/web/
+
+# Tauri generated resources, platform runtimes and release overlay
+src-tauri/target/
+src-tauri/resources/backend/
+src-tauri/binaries/node-*
+src-tauri/gen/
+.cache/
+tauri.release.conf.json
+
+desktop-artifacts/

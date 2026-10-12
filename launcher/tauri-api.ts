@@ -1,0 +1,11 @@
+import {invoke} from '@tauri-apps/api/core';
+import {listen} from '@tauri-apps/api/event';
+import {check} from '@tauri-apps/plugin-updater';
+import type {LauncherApi} from './Panel';
+import type {DesktopUpdater} from './UpdatePanel';
+export function reportTauriError(error:unknown){const message=(error instanceof Error?error.message:String(error)).slice(0,4000);void invoke('launcher_report_error',{message}).catch(()=>{});}
+export function createTauriApi():LauncherApi {
+ const call=async<T>(method:string,...args:unknown[])=>{try{return await invoke<T>('launcher_call',{method,args});}catch(error){reportTauriError(error);throw error;}};
+ const update:DesktopUpdater={info:()=>invoke('updater_info'),check:async()=>{const found=await check();if(!found)return null;let downloading:Promise<void>|undefined;return {version:found.version,body:found.body,download:async progress=>{let total:number|undefined,received=0;await (downloading=found.download(event=>{if(event.event==='Started')total=event.data.contentLength;if(event.event==='Progress'){received+=event.data.chunkLength;progress(received,total)}}).finally(()=>{downloading=undefined}))},install:()=>found.install(),close:async()=>{await downloading?.catch(()=>{});await found.close()}}},stop:()=>call('stop'),relaunch:()=>invoke('restart_launcher')};
+ return {getStatus:()=>call('status'),saveDesktopSettings:s=>call('saveDesktopSettings',s),subscribe:fn=>{let active=true,off:(()=>void)|undefined;void listen('launcher-status',event=>{if(active)fn(event.payload as Parameters<typeof fn>[0])}).then(unlisten=>{if(active)off=unlisten;else unlisten()}).catch(reportTauriError);return()=>{active=false;off?.()}},listPlugins:()=>call('listPlugins'),setPluginEnabled:(...a)=>call('setPluginEnabled',...a),setPluginAutoStart:(...a)=>call('setPluginAutoStart',...a),startPlugin:id=>call('startPlugin',id),stopPlugin:id=>call('stopPlugin',id),reloadPlugins:()=>call('reloadPlugins'),openPluginsFolder:()=>call('openPluginsFolder'),pluginUiUrl:id=>call('pluginUiUrl',id),invokePlugin:(...a)=>call('invokePlugin',...a),restart:()=>call('restartDesktop'),openDesktop:()=>call('openDesktop'),connectDesktop:()=>call('connectDesktop'),update};
+}

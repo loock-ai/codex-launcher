@@ -1,0 +1,15 @@
+import {mkdir,cp,rm} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {resolve,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const run=(cmd,args,opts={})=>new Promise((ok,no)=>{const c=spawn(cmd,args,{cwd:root,stdio:'inherit',...opts});c.on('error',no);c.on('exit',code=>code===0?ok():no(Error(cmd+' exited '+code)));});
+const npmCli=process.env.npm_execpath;if(!npmCli)throw Error('请通过 npm run build:tauri 构建');
+const runNpm=(args,opts)=>run(process.execPath,[npmCli,...args],opts);
+await runNpm(['run','build:launcher']);
+const backend=join(root,'src-tauri/resources/backend');await rm(backend,{recursive:true,force:true});await mkdir(backend,{recursive:true});
+await cp(join(root,'npm-dist'),join(backend,'npm-dist'),{recursive:true});
+await cp(join(root,'plugins'),join(backend,'plugins'),{recursive:true,filter:path=>!path.endsWith('.ts')&&!path.endsWith('.map')});
+for(const file of ['package.json','package-lock.json'])await cp(join(root,file),join(backend,file));
+await runNpm(['ci','--omit=dev','--ignore-scripts','--no-audit','--no-fund'],{cwd:backend});
+console.log('Tauri 后台资源就绪；使用用户 Node.js，不包含 Node 运行时');

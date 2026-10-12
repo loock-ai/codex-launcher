@@ -1,0 +1,13 @@
+// @vitest-environment node
+import {afterEach,expect,test} from 'vitest';
+import {mkdtemp,readFile,writeFile,stat,mkdir,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {defaultConfig} from '../../server/launcher/config.js';
+import {loadHostConfig,saveHostConfig} from '../../server/launcher/host-config.js';
+const roots:string[]=[];
+afterEach(async()=>{await Promise.all(roots.splice(0).map(p=>rm(p,{recursive:true,force:true})));});
+async function fixture(){const root=await mkdtemp(join(tmpdir(),'host-config-'));roots.push(root);return {root,file:join(root,'launcher.json')};}
+test('migrates legacy ports and token only after creating a private exact backup',async()=>{const {file,root}=await fixture();const legacy={...defaultConfig(),token:'existing-token-123456789',gatewayPort:21111,cdpPort:21112,appServerPort:21113};const original=JSON.stringify(legacy);await writeFile(file,original);expect(await loadHostConfig(file)).toEqual({schemaVersion:2,desktop:{appPath:legacy.appPath,cdpPort:21112}});expect(await readFile(file+'.v1.bak','utf8')).toBe(original);expect((await stat(file+'.v1.bak')).mode&0o777).toBe(0o600);expect((await stat(file)).mode&0o777).toBe(0o600);const mobile=join(root,'plugin-data/mobile/config.json');expect(JSON.parse(await readFile(mobile,'utf8'))).toEqual({mode:'cdp',gatewayPort:21111,appServerPort:21113,host:legacy.host,token:legacy.token,upstreamUrl:legacy.upstreamUrl});expect((await stat(mobile)).mode&0o777).toBe(0o600);});
+test('does not overwrite existing Mobile config or backup and migrates idempotently',async()=>{const {file,root}=await fixture();await writeFile(file,JSON.stringify(defaultConfig()));await writeFile(file+'.v1.bak','original backup');await mkdir(join(root,'plugin-data/mobile'),{recursive:true});const mobile=join(root,'plugin-data/mobile/config.json');await writeFile(mobile,'{"token":"already migrated"}');await loadHostConfig(file);await loadHostConfig(file);expect(await readFile(mobile,'utf8')).toBe('{"token":"already migrated"}');expect(await readFile(file+'.v1.bak','utf8')).toBe('original backup');});
+test('invalid legacy input is preserved unchanged; host save validates and strips extra fields',async()=>{const {file}=await fixture();await writeFile(file,'{"mode":"bad"}');await expect(loadHostConfig(file)).rejects.toThrow();expect(await readFile(file,'utf8')).toBe('{"mode":"bad"}');await saveHostConfig(file,{schemaVersion:2,desktop:{appPath:'/Applications/ChatGPT.app',cdpPort:9333}});expect(JSON.parse(await readFile(file,'utf8'))).toEqual({schemaVersion:2,desktop:{appPath:'/Applications/ChatGPT.app',cdpPort:9333}});});
