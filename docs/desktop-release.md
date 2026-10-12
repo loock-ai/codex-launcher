@@ -47,7 +47,7 @@ Windows 构建使用 GitHub `windows-latest` 与 Rust MSVC x64 工具链，全�
 
 ## 当前验证状态（2026-10-12）
 
-本机macOS Apple Silicon应用已构建，约30.39MiB（已移除Node运行时）。656项Vitest通过，11项门控测试跳过；Rust check/test和TypeScript检查通过。Tauri官方CLI临时签名与发布脚本验签互通通过。真实用户Node后台冒烟验证HTTP200及退出端口回收，流水线每个平台均执行该冒烟。Windows和Intel包尚待runner执行。原生UI工具未识别Tauri窗口（cgWindowNotFound），虽窗口日志visible=true，仍不计为界面验收通过。尚未执行正式更新安装或上传远端产物。
+本机macOS Apple Silicon应用已构建，约30.39MiB（已移除Node运行时）。656项Vitest通过，11项门控测试跳过；Rust check/test和TypeScript检查通过。Tauri官方CLI临时签名与发布脚本验签互通通过。真实用户Node后台冒烟验证HTTP200及退出端口回收，流水线每个平台均执行该冒烟。Windows x64、Intel macOS和Apple Silicon构建及后台冒烟均已在GitHub Actions通过，三个安装包已下载回读并验证SHA-256。原生UI工具未识别Tauri窗口（cgWindowNotFound），虽窗口日志visible=true，仍不计为界面验收通过。尚未执行正式更新安装或上传远端产物。
 
 ## 使用用户 Node.js
 
@@ -64,3 +64,7 @@ macOS 中应用已运行时，`open -a` 只会激活现有窗口，不能依赖�
 配置目录中的 `launcher-diagnostics.json` 保存 Desktop 连接状态、插件状态、最近RPC/前端错误和脱敏日志，0600原子写入。不包含配置、访问口令或完整请求参数。管理页重启时若工具无法读取原生窗口，可直接读取此文件。读状态不会连接或启动桌面。
 
 2026-10-12 启动修复验证：首次与二次实例共用自动启动动作计划；普通二次实例启动插件，`--no-auto-start`不启动，`--open-web`随后调用Mobile。macOS原生隔离实例验证：不带`-n`未转交参数；带`-n`后普通启动计数1、打开Web计数1，诊断无错误。新增启动参数回归后Rust10项通过，完整Vitest659项通过（11项门控跳过），新包约30.40MiB。隔离测试未连接真实Desktop。
+
+## 首轮远端构建结果
+
+[运行 38194561468](https://github.com/loock-ai/codex-mobile/actions/runs/38194561468) 基于 `a733b96`，版本 `0.1.0`：类型检查、回归、macOS ARM64、macOS x64、Windows x64构建及后台冒烟全部通过。已下载三个安装包并逐个匹配清单SHA-256。Windows NSIS安装包约5.7MB，Apple Silicon DMG约10.8MB。功能分支发布job按规则跳过。Windows安装UI与真实Desktop对话、正式签名发布和更新安装仍未作为此构建验收的一部分。

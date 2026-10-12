@@ -14,7 +14,7 @@
 
 - Rust check/test、前端与服务端TypeScript通过，已生成macOS Apple Silicon应用（约30.39MiB（用户Node模式））。
 - Tauri官方CLI临时签名与发布验签脚本互通验证通过，测试密钥已删除。
-- Windows与Intel macOS真实产物待GitHub runner执行，不把命令规划单测算作安装验收。
+- Windows、Intel macOS、Apple Silicon真实产物均已在运行38194561468构建成功，后台冒烟通过；安装包下载回读SHA-256匹配。构建与后台检查不代表原生安装UI或真实账户对话验收。
 - 受控启动使用临时配置、--no-auto-start和--no-desktop；Rust日志确认窗口visible=true，但CUA始终cgWindowNotFound，原生UI验收未完成，测试实例已退出。
 - 发布密钥尚未配置；正式发布、更新下载安装端到端验收尚未执行。
 
@@ -23,3 +23,5 @@
 - 已请求用户确认将未提交实现推送独立测试分支，触发Windows/Intel/macOS构建；确认前不写远端。
 
 用户现已明确要求提交并推送；将推送当前功能分支，触发仅构建流水线，正式发布仍仅允许main。
+
+已完成提交、推送和三平台远端构建验证，正式发布job跳过。
