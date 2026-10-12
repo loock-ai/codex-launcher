@@ -2,8 +2,9 @@ const {app,Tray,Menu,BrowserWindow,nativeImage,ipcMain,clipboard,shell,dialog,pr
 const path=require('node:path');
 protocol.registerSchemesAsPrivileged([{scheme:'launcher-plugin',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true}}]);
 app.setName('Codex Launcher');
-// 名称调整不迁移用户配置、插件和单实例锁目录。
-app.setPath('userData',path.join(app.getPath('appData'),'codex-mobile'));
+const {resolveConfigDirectory}=require('./config-directory.cjs');
+const configArg=process.argv.indexOf('--config-dir');
+app.setPath('userData',resolveConfigDirectory(app.getPath('home'),app.getPath('appData'),configArg>=0?process.argv[configArg+1]:undefined));
 let tray,panel,controller,quitting=false;
 const {createCommandHandler}=require('./commands.cjs');
 let resolveReady,rejectReady;

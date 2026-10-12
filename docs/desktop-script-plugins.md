@@ -20,7 +20,7 @@
 点击「打开插件目录」可直接进入实际目录。标准安装路径示例：
 
 ```text
-~/Library/Application Support/codex-mobile/
+~/.codex-launcher/
 ├── config.json
 ├── plugins.json                       # 开启状态
 └── plugins/
@@ -28,6 +28,8 @@
         ├── manifest.json              # 名称、ID、入口
         └── inject.js                  # 注入脚本
 ```
+
+默认目录在 macOS、Windows 均为用户主目录中的 `.codex-launcher/`；显式 `--config-dir` 仍使用指定路径。首次启动新版且目标目录不存在时，整体迁移旧应用数据目录中的 `codex-mobile/`，保留配置、插件、启用状态和访问口令；目标已存在时不会覆盖或合并。迁移失败时会报错，不静默生成新配置。
 
 目录以启动器实际 config.json 所在位置为准。源码模板位于仓库 `plugins/`，随应用包分发；首次初始化只复制不存在的插件文件夹，不覆盖已经复制或由用户修改的脚本。
 

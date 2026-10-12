@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod node_runtime;
 mod launch_args;
+mod config_directory;
 use launch_args::{launch_actions, LaunchAction};
 use base64::Engine;
 use serde_json::{json, Value};
@@ -249,7 +250,8 @@ fn main() {
   let resource=app.path().resource_dir()?;let root=if cfg!(debug_assertions){std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/backend")}else{resource.join("backend")};
 
   let argv:Vec<String>=std::env::args().collect();
-  let config_dir=argv.iter().position(|a|a=="--config-dir").and_then(|i|argv.get(i+1)).map(std::path::PathBuf::from).unwrap_or(app.path().data_dir()?.join("codex-mobile"));
+  let explicit_config=argv.iter().position(|a|a=="--config-dir").and_then(|i|argv.get(i+1)).map(std::path::PathBuf::from);
+  let config_dir=config_directory::resolve(&app.path().home_dir()?,&app.path().data_dir()?,explicit_config)?;
   let config=config_dir.join("config.json");
   let backend=tauri::async_runtime::block_on(async{
    let node=node_runtime::resolve().await?;
