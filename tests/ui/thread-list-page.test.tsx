@@ -302,7 +302,7 @@ describe("会话侧边栏列表", () => {
     const meta = unread.closest(".thread-row-meta");
 
     expect(meta).not.toBeNull();
-    expect(within(meta as HTMLElement).getByText("1 分钟")).not.toBeNull();
+    expect(within(meta as HTMLElement).getByText("1m")).not.toBeNull();
     expect(meta?.firstElementChild).toBe(unread);
     now.mockRestore();
   });
