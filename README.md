@@ -1,7 +1,7 @@
 # Codex Launcher
 
 [![Apache-2.0](https://img.shields.io/github/license/loock-ai/codex-launcher)](LICENSE)
-![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Web-111111)
+![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Web-111111)
 [![GitHub Release](https://img.shields.io/github/v/release/loock-ai/codex-launcher)](https://github.com/loock-ai/codex-launcher/releases/latest)
 
 **在 Mac 上启动连接，在手机上继续桌面的 Codex 任务。**
@@ -21,33 +21,25 @@ app-server 模式。
 
 ## 快速开始
 
-### 1. 构建启动器
+### 1. 下载并安装启动器
 
-需要 macOS、Node.js 20+，以及已安装并登录的 ChatGPT Desktop。
-当前应用包以 Apple Silicon 为主，尚未签名，需从源码构建。
+从 [GitHub Releases](https://github.com/loock-ai/codex-launcher/releases) 下载 **Codex Launcher** 桌面安装包；桌面版本以 `desktop-v` 开头，安卓包仍叫 **Codex Mobile**。
 
-```bash
-git clone https://github.com/loock-ai/codex-launcher.git
-cd codex-launcher
-npm install
-npm run package:launcher
-```
+| 电脑 | 下载文件 |
+| --- | --- |
+| macOS 13.5+，M 系列芯片 | `CodexLauncher-版本-darwin-aarch64.dmg` |
+| macOS 13.5+，Intel 芯片 | `CodexLauncher-版本-darwin-x86_64.dmg` |
+| Windows 10+，x64 | `CodexLauncher-版本-windows-x86_64.exe` |
 
-打开生成的应用：
+先安装 [Node.js 20+](https://nodejs.org/zh-cn/download)，并准备已安装、已登录的 ChatGPT/Codex 桌面端。安装包使用本机 Node，无需 Rust 或源码构建。
 
-```bash
-open -n -a "src-tauri/target/release/bundle/macos/Codex Launcher.app" --args --open-web
-```
+macOS 打开 DMG，将 **Codex Launcher.app** 拖到“应用程序”后打开；Windows 运行 EXE 安装器。当前包未配置 Apple 公证或 Windows 代码签名；首次打开若出现系统拦截，按系统的隐私与安全性提示处理。Windows 需要 WebView2。
 
-只运行源码版面板，也可使用：
-
-```bash
-npm run launcher
-```
+希望从源码构建时，参见 [桌面构建与更新](#桌面构建与更新)。
 
 ### 2. 连接桌面
 
-点击 Mac 菜单栏的 `⌘` 图标打开启动器。
+打开启动器窗口，或点击托盘／Mac 菜单栏的 `⌘` 图标。
 
 1. 在 **桌面** 页核对 ChatGPT 应用路径与 CDP 端口并保存。
 2. 在 **插件** 页打开 Mobile 的 **配置**，选择 **CDP 桌面桥接**；在插件连接页点击 **打开 Web** 进入网页。启用且开启自动启动的插件会随启动器运行。
@@ -58,7 +50,7 @@ npm run launcher
 
 ### 3. 在手机上打开
 
-手机与 Mac 连接同一网络，在 Mobile 插件配置页点击 **展开二维码**后扫码，
+手机与电脑连接同一网络，在 Mobile 插件配置页点击 **展开二维码**后扫码，
 或点击 **复制连接链接**，把完整链接发送到手机浏览器。
 
 二维码默认收起，可再次点击收起。完整链接包含访问口令，请使用复制功能，
@@ -226,5 +218,14 @@ RUN_CDP_FIXTURE=1 npx vitest run \
 桌面版构建目标包含 macOS 13.5+ 的 Apple Silicon、Intel，以及 Windows 10+ x64，使用用户电脑上的 Node.js 20 或以上版本，安装包不再携带 Node 运行时。执行 `npm run package:tauri` 构建 Tauri 应用及 DMG；旧 Electron 构建保留为 `npm run package:electron`。源码调试使用 `npm run launcher`。
 
 启动器「更新」页可检查新版本、查看说明、下载验签和安装重启。开发包未配置公钥时明确显示更新未配置。独立工作流 `build-desktop.yml` 负责三个目标构建及桌面发布，桌面 tags 与更新索引独立于安卓。签名配置、发布顺序和验收边界见 [桌面发布文档](docs/desktop-release.md)。
+
+未配置更新签名时仍会发布安装包，自动更新频道保持原样，可下载新安装包手动更新。
+
+```bash
+git clone https://github.com/loock-ai/codex-launcher.git
+cd codex-launcher
+npm install
+npm run package:tauri
+```
 
 源码构建需要 Node.js、Rust stable；macOS 需要 Xcode Command Line Tools，Windows 需要 Microsoft C++ Build Tools。Windows 安装包使用 NSIS，首次运行需 WebView2；具体构建和验收状态见桌面发布文档。Windows 桌面应用路径填写实际 `.exe` 路径，默认值仅作位置提示。

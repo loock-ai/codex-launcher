@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, renameSync } from 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 // @ts-expect-error release utility is deliberately standalone Node ESM
-import { resolveVersion, releaseConfig, collectArtifacts, generateIndex, verifyUpdaterSignature, publicationMode } from '../../scripts/desktop-release.mjs';
+import { resolveVersion, releaseConfig, collectArtifacts, generateIndex, verifyUpdaterSignature, publicationMode, validateInstallerArtifacts } from '../../scripts/desktop-release.mjs';
 
 // Interoperability vector from jedisct1/rust-minisign-verify 0.3.0 verify_prehashed.
 const publicKey = Buffer.from('untrusted comment: minisign public key E7620F1842B4E81F\nRWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3').toString('base64');
@@ -82,11 +82,30 @@ describe('独立桌面发布' , () => {
   });
 });
 
-it('自动构建不依赖签名配置，但显式正式发布必须有密钥',()=>{
+it('main发布安装包不依赖更新签名，只有密钥齐全才更新频道',()=>{
  const main={ref:'refs/heads/main',event:'push',requested:false};
- expect(publicationMode({...main,privateKeyAvailable:false,publicKey:''}).publish).toBe(false);
- expect(publicationMode({...main,privateKeyAvailable:true,publicKey:'key'}).publish).toBe(true);
+ expect(publicationMode({...main,privateKeyAvailable:false,publicKey:''})).toMatchObject({publish:true,signed:false});
+ expect(publicationMode({...main,privateKeyAvailable:true,publicKey:'key'})).toMatchObject({publish:true,signed:true});
+ expect(publicationMode({...main,privateKeyAvailable:true,publicKey:''})).toMatchObject({publish:true,signed:false});
  expect(publicationMode({...main,ref:'refs/heads/feature',privateKeyAvailable:true,publicKey:'key'}).publish).toBe(false);
  expect(publicationMode({...main,event:'workflow_dispatch',privateKeyAvailable:true,publicKey:'key'}).publish).toBe(false);
- expect(()=>publicationMode({...main,event:'workflow_dispatch',requested:true,privateKeyAvailable:false,publicKey:''})).toThrow(/签名/);
+ expect(publicationMode({...main,event:'workflow_dispatch',requested:true,privateKeyAvailable:false,publicKey:''})).toMatchObject({publish:true,signed:false});
+});
+it('未签名发布要求三个平台安装包齐全且哈希正确',()=>{
+ const root=mkdtempSync(join(tmpdir(),'desktop-installers-'));
+ const output=join(root,'out');
+ for(const platform of ['darwin-aarch64','darwin-x86_64','windows-x86_64']){
+  const source=join(root,platform);mkdirSync(source);
+  writeFileSync(join(source,platform.startsWith('windows')?'App.exe':'App.dmg'),platform);
+  collectArtifacts(source,output,'0.1.0',platform.split('-')[1],false,'',platform);
+ }
+ expect(validateInstallerArtifacts(output,'0.1.0').map((p:string)=>p.split('/').at(-1))).toEqual([
+  'CodexLauncher-0.1.0-darwin-aarch64.dmg',
+  'CodexLauncher-0.1.0-darwin-x86_64.dmg',
+  'CodexLauncher-0.1.0-windows-x86_64.exe',
+ ]);
+ const win=join(output,'manifest-windows-x86_64.json');renameSync(win,win+'.held');
+ expect(()=>validateInstallerArtifacts(output,'0.1.0')).toThrow();renameSync(win+'.held',win);
+ writeFileSync(join(output,'CodexLauncher-0.1.0-darwin-aarch64.dmg'),'tampered');
+ expect(()=>validateInstallerArtifacts(output,'0.1.0')).toThrow(/hash/);
 });

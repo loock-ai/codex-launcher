@@ -14,16 +14,18 @@
 | Secret | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 私钥密码；无密码时留空 |
 | Variable | `TAURI_UPDATER_PUBLIC_KEY` | 与该私钥匹配的公钥文件内容 |
 
-手动要求正式发布时，缺少私钥或公钥立即失败。main自动构建若尚未配置签名，会明确提示并仅生成安装包；签名配置齐全后自动发布更新频道。仅构建模式产出DMG或NSIS安装包，不生成updater签名资产。构建脚本生成根目录 `tauri.release.conf.json` 作为配置覆盖，只有版本、公钥、更新地址和 `createUpdaterArtifacts` 开关，不含私钥。该文件属于临时产物，不要提交。
+main 自动构建及手动选择发布时，无论是否配置更新签名都发布三个平台的安装包。缺少私钥或公钥时明确提示并跳过自动更新频道；签名配置齐全后同时生成签名更新包并更新频道。仅构建模式产出DMG或NSIS安装包，不生成updater签名资产。构建脚本生成根目录 `tauri.release.conf.json` 作为配置覆盖，只有版本、公钥、更新地址和 `createUpdaterArtifacts` 开关，不含私钥。该文件属于临时产物，不要提交。
 
 ## 版本与发布顺序
 
 工作流读取 GitHub 的全部 tags，只考虑 `desktop-vX.Y.Z`。已有桌面版本时取「最高已发布版本的下一个 patch」与 `desktop-version.json` 中较高者；没有记录时采用 `desktop-version.json`。网络/API 失败会中止，不猜测版本。手动版本只接受无前导零的三个整数（例如 `0.1.1`），并要求高于所有已有桌面版本，防止频道回退。测试分支只生成 Actions 构建产物；两种发布入口均只允许 main。
 
 1. Ubuntu verify job 先执行 `npm ci`、`npm run typecheck`、`npm test`，成功后才开始构建矩阵。macOS 打包 DMG、`.app.tar.gz` 更新包及 `.sig`；Windows 打包 NSIS `.exe` 及 `.exe.sig`，Tauri v2 直接复用安装器作为更新包，不生成旧版 ZIP。所有资产名称包含平台与架构，并记录 SHA-256。
-2. 三个平台全部成功后，发布 job 验证资产、版本、架构、签名文件和哈希。生成 Tauri 静态索引，平台键为 `darwin-aarch64`、`darwin-x86_64`、`windows-x86_64`；任一平台资产缺失时拒绝生成索引。
+2. 三个平台全部成功后，发布 job 验证三个安装包的版本、架构和 SHA-256，生成 `SHA256SUMS.txt`。已配置更新签名时额外校验签名更新包并生成 Tauri 静态索引，平台键为 `darwin-aarch64`、`darwin-x86_64`、`windows-x86_64`；任一平台资产缺失时拒绝生成索引。
 3. 创建 `desktop-vX.Y.Z` 草稿 Release，上传全部文件，再下载回读验证哈希后转为正式 Release。
-4. 最后把 `latest.json` 上传到固定的 `desktop-updates` 预发布 Release；索引 URL 始终指向具体版本的资产，不指向 mobile latest。
+4. 仅签名发布最后把 `latest.json` 上传到固定的 `desktop-updates` 预发布 Release；索引 URL 始终指向具体版本的资产，不指向 mobile latest。
+
+Release 说明使用 [快速体验模板](desktop-release-notes.md)，包含下载选择、Node.js 条件、安装、桌面连接和手机访问步骤。
 
 所有桌面 Release 都明确设置 `--latest=false`，固定频道为 prerelease，因此不会把 Android 使用的 `/releases/latest` 改成桌面版本。发布流水线串行，不会因新 push 取消正在上传的版本。失败时保留草稿/已发布版本供排查，不删除 tag 或覆盖同版本资产；确认问题后使用新版本重新发布。频道上传失败时已有客户端仍使用之前索引。
 

@@ -31,10 +31,9 @@ export function resolveVersion(base, tags, requested = '') {
   return version;
 }
 export function publicationMode({ref,event,requested,privateKeyAvailable,publicKey}) {
-  if (ref !== 'refs/heads/main' || (event !== 'push' && !requested)) return {publish:false,notice:''};
-  if (privateKeyAvailable && publicKey?.trim()) return {publish:true,notice:''};
-  if (event === 'workflow_dispatch' && requested) throw new Error('正式发布需要配置桌面更新签名私钥和公钥');
-  return {publish:false,notice:'桌面更新签名尚未配置，本次仅构建安装包，不发布更新频道'};
+  const publish = ref === 'refs/heads/main' && (event === 'push' || (event === 'workflow_dispatch' && requested));
+  const signed = publish && Boolean(privateKeyAvailable && publicKey?.trim());
+  return {publish,signed,notice:publish && !signed ? '更新签名尚未配置，发布安装包但不更新自动更新频道' : ''};
 }
 export function releaseConfig(version, repo, publicKey, signed) {
   validateVersion(version); repository(repo);
@@ -91,6 +90,19 @@ export function collectArtifacts(source, output, version, arch, signed, publicKe
   }
   writeFileSync(join(output,`manifest-${platform}.json`),JSON.stringify({version,arch,platform,entries},null,2));
 }
+export function validateInstallerArtifacts(root, version) {
+  validateVersion(version);
+  return ['darwin-aarch64','darwin-x86_64','windows-x86_64'].map(platform => {
+    const manifest = JSON.parse(readFileSync(join(root,`manifest-${platform}.json`),'utf8'));
+    const extension = platform.startsWith('windows-') ? '.exe' : '.dmg';
+    const item = manifest.entries[extension];
+    if (manifest.version !== version || manifest.platform !== platform || manifest.arch !== platform.split('-')[1]) throw new Error('Manifest version/architecture mismatch');
+    if (!item || item.name !== `CodexLauncher-${version}-${platform}${extension}`) throw new Error('Installer name mismatch');
+    const path = join(root,item.name);
+    if (!readFileSync(path).length || digest(path) !== item.sha256) throw new Error('Installer hash mismatch');
+    return path;
+  });
+}
 export function generateIndex(root, version, repo, publicKey) {
   validateVersion(version); repository(repo);
   const platforms = {};
@@ -116,13 +128,19 @@ function tags(repo) {
   const pages = JSON.parse(gh('api',`repos/${repository(repo)}/tags?per_page=100`,'--paginate','--slurp'));
   return pages.flat().map(item => item.name);
 }
-function publish(root, version, repo) {
+function publish(root, version, repo, signed) {
   if (process.env.GITHUB_REF !== 'refs/heads/main') throw new Error('Publishing requires main');
   resolveVersion(version,tags(repo),version); // recheck immediately before creating release
-  const index = generateIndex(root,version,repo,process.env.TAURI_UPDATER_PUBLIC_KEY);
+  const installers = validateInstallerArtifacts(root,version);
+  const index = signed ? generateIndex(root,version,repo,process.env.TAURI_UPDATER_PUBLIC_KEY) : null;
   const tag = `desktop-v${version}`;
-  const assets = files(root).filter(p => /\.(dmg|gz|sig|exe)$/.test(p));
-  gh('release','create',tag,...assets,'--repo',repo,'--target',process.env.GITHUB_SHA,'--title',`Codex Launcher ${version}`,'--notes','macOS and Windows desktop build; Apple notarization and Windows code signing are not configured.','--draft','--latest=false');
+  const assets = signed ? files(root).filter(p => /\.(dmg|gz|sig|exe)$/.test(p)) : installers;
+  const checksumPath = join(root,'SHA256SUMS.txt');
+  writeFileSync(checksumPath,assets.map(path => `${digest(path)}  ${basename(path)}`).join('\n')+'\n');
+  assets.push(checksumPath);
+  const notesPath = join(root,'RELEASE-NOTES.md');
+  writeFileSync(notesPath,readFileSync(new URL('../docs/desktop-release-notes.md',import.meta.url),'utf8'));
+  gh('release','create',tag,...assets,'--repo',repo,'--target',process.env.GITHUB_SHA,'--title',`Codex Launcher ${version}`,'--notes-file',notesPath,'--draft','--latest=false');
   // Read back all uploaded asset sizes before publishing and advancing the channel.
   const published = JSON.parse(gh('api',`repos/${repo}/releases/tags/${tag}`));
   for (const asset of assets) {
@@ -136,6 +154,7 @@ function publish(root, version, repo) {
     }
   } finally { rmSync(verification,{recursive:true,force:true}); }
   gh('release','edit',tag,'--repo',repo,'--draft=false','--latest=false');
+  if (!signed) return;
   const releases = JSON.parse(gh('api',`repos/${repo}/releases?per_page=100`,'--paginate','--slurp')).flat();
   if (!releases.some(r => r.tag_name === 'desktop-updates')) {
     gh('release','create','desktop-updates','--repo',repo,'--target',process.env.GITHUB_SHA,'--title','Desktop update channel','--notes','Desktop updater index; independent of mobile latest.','--prerelease','--latest=false');
@@ -148,7 +167,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const repo = process.env.GITHUB_REPOSITORY;
   if (command === 'mode') {
     const mode = publicationMode({ref:process.env.GITHUB_REF,event:process.env.GITHUB_EVENT_NAME,requested:process.env.REQUEST_PUBLISH==='true',privateKeyAvailable:process.env.HAS_SIGNING_PRIVATE_KEY==='true',publicKey:process.env.TAURI_UPDATER_PUBLIC_KEY});
-    appendFileSync(process.env.GITHUB_OUTPUT,`publish=${mode.publish}\n`);
+    appendFileSync(process.env.GITHUB_OUTPUT,`publish=${mode.publish}\nsigned=${mode.signed}\n`);
     if(mode.notice)console.log('::notice::'+mode.notice);
   } else if (command === 'version') {
     const version = resolveVersion(JSON.parse(readFileSync('desktop-version.json','utf8')).version,tags(repo),process.env.REQUESTED_VERSION || '');
@@ -158,6 +177,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (signed && !process.env.TAURI_SIGNING_PRIVATE_KEY) throw new Error('Missing TAURI_SIGNING_PRIVATE_KEY');
     writeFileSync('tauri.release.conf.json',JSON.stringify(releaseConfig(process.env.DESKTOP_VERSION,repo,process.env.TAURI_UPDATER_PUBLIC_KEY,signed),null,2));
   } else if (command === 'collect') collectArtifacts(args[0],args[1],process.env.DESKTOP_VERSION,process.env.DESKTOP_ARCH,process.env.SIGNED === 'true',process.env.TAURI_UPDATER_PUBLIC_KEY,process.env.DESKTOP_PLATFORM);
-  else if (command === 'publish') publish(args[0],process.env.DESKTOP_VERSION,repo);
+  else if (command === 'publish') publish(args[0],process.env.DESKTOP_VERSION,repo,process.env.SIGNED === 'true');
   else throw new Error('Unknown desktop release command');
 }

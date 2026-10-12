@@ -14,6 +14,7 @@ on:
       - 'scripts/desktop-release*.mjs'
       - 'scripts/smoke-desktop-backend.mjs'
       - 'desktop-version.json'
+      - 'docs/desktop-release-notes.md'
       - 'package.json'
       - 'package-lock.json'
       - '*config*.json'
@@ -26,7 +27,7 @@ on:
         type: string
         required: false
       publish:
-        description: '发布桌面 Release 并更新桌面频道（仅 main）'
+        description: '发布桌面安装包；已配置签名时更新频道（仅 main）'
         type: boolean
         default: false
 
@@ -46,6 +47,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       publish: ${{ steps.mode.outputs.publish }}
+      signed: ${{ steps.mode.outputs.signed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -107,7 +109,7 @@ jobs:
       DESKTOP_PLATFORM: ${{ matrix.platform }}
       DESKTOP_BUNDLES: ${{ matrix.bundles }}
       TAURI_ENV_TARGET_TRIPLE: ${{ matrix.target }}
-      SIGNED: ${{ needs.version.outputs.publish }}
+      SIGNED: ${{ needs.version.outputs.signed }}
       TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v4
@@ -164,5 +166,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           DESKTOP_VERSION: ${{ needs.version.outputs.version }}
+          SIGNED: ${{ needs.version.outputs.signed }}
           TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
         run: node scripts/desktop-release.mjs publish desktop-artifacts
