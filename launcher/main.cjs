@@ -32,6 +32,12 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
    if(event.sender!==panel.webContents||event.senderFrame!==panel.webContents.mainFrame)throw new Error('无效控制来源');
    return fn(...args);
   });
+  handle('plugins:uninstall',id=>controller.uninstallPlugin(id));
+  handle('repositories:list',()=>controller.listPluginRepositories());
+  handle('repositories:add',input=>controller.addPluginRepository(input));
+  handle('repositories:edit',(id,input)=>controller.editPluginRepository(id,input));
+  handle('repositories:enable',(id,value)=>controller.setPluginRepositoryEnabled(id,value));
+  handle('repositories:remove',id=>controller.removePluginRepository(id));
   handle('plugins:check-updates',()=>controller.checkPluginUpdates());
   handle('plugins:update',(id,options)=>controller.updatePlugin(id,options));
   handle('plugins:list',()=>controller.listPlugins());
@@ -45,7 +51,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   handle('status',()=>controller.status());handle('desktop:save',settings=>controller.saveDesktopSettings(settings));
   handle('desktop:restart',()=>controller.restartDesktop());handle('desktop:open',()=>controller.openDesktop());handle('desktop:connect',()=>controller.connectDesktop());
   controller.on('status',status=>{if(!panel.isDestroyed())panel.webContents.send('launcher:changed',status);tray.setToolTip('Codex Launcher · '+(status.desktop.connected?'桌面已连接':'桌面未连接'));});
-  tray.on('click',()=>panel.isVisible()?panel.hide():showPanel());
+  tray.on('click',showPanel);
   tray.on('right-click',()=>tray.popUpContextMenu(Menu.buildFromTemplate([{label:'打开启动器',click:showPanel},{label:'打开 ChatGPT',click:()=>controller.openDesktop().catch(showError)},{type:'separator'},{label:'退出启动器',click:()=>app.quit()}])));
   await panel.loadFile(ui);resolveReady();await runCommand(process.argv);
  }).catch(error=>{rejectReady(error);showError(error);});

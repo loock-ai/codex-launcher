@@ -59,3 +59,17 @@ it('目录名与ID不一致或被其他ID占用时拒绝更新，不生成重复
  await expect(installer.install(entry(bytes),{allowLocalChanges:true})).rejects.toThrow('目录');expect(await readFile(join(root,'plugins/demo/main.cjs'),'utf8')).toBe('other-code');
  }finally{await rm(root,{recursive:true,force:true})}
 });
+it('已安装插件绑定原仓库，不能被同ID其他仓库静默替换',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'plugin-source-pin-'));try{
+ const bytes=await zip({'manifest.json':JSON.stringify(manifest),'main.cjs':'original'});const installer=new PluginInstaller(root,{stop:async()=>{},reload:async()=>{},restore:async()=>{}},async()=>bytes);await installer.install(entry(bytes));
+ const foreign={...entry(bytes),git:{...entry(bytes).git,url:'https://github.com/other/plugins.git'},release:{...entry(bytes).release,url:'https://github.com/other/plugins/releases/download/v1.0.1/demo.zip'}};
+ await expect(installer.install(foreign,{allowLocalChanges:true})).rejects.toThrow('来源');expect(await readFile(join(root,'plugins/demo/main.cjs'),'utf8')).toBe('original');
+ }finally{await rm(root,{recursive:true,force:true})}
+});
+it('删除内置插件后坏包重装失败，重启仍保持删除',async()=>{
+ const {LauncherController}=await import('../../server/launcher/controller.js');const {PluginCatalog}=await import('../../server/launcher/plugin-catalog.js');const root=await mkdtemp(join(tmpdir(),'plugin-reinstall-policy-')),pkg=await mkdtemp(join(tmpdir(),'plugin-reinstall-template-'));let controller:InstanceType<typeof LauncherController>|undefined;
+ try{await mkdir(join(pkg,'plugins/demo'),{recursive:true});await writeFile(join(pkg,'plugins/demo/manifest.json'),JSON.stringify({...manifest,version:'1.0.0',defaultEnabled:true}));await writeFile(join(pkg,'plugins/demo/main.cjs'),'exports.activate=async()=>({});');
+ const bytes=await zip({'manifest.json':JSON.stringify({...manifest,defaultEnabled:true}),'main.cjs':'exports.activate=async()=>{throw Error("bad-activate")};'});const p=entry(bytes);const deps={pluginUpdates:{catalog:new PluginCatalog(async()=>({schemaVersion:1,repository:'https://github.com/loock-ai/codex-launcher-plugins',plugins:[p]})),download:async()=>bytes}};
+ controller=new LauncherController(join(root,'config.json'),pkg,deps);await controller.initialize();await controller.uninstallPlugin('demo');await expect(controller.updatePlugin('demo')).rejects.toThrow('bad-activate');await controller.stop();controller=new LauncherController(join(root,'config.json'),pkg,deps);await controller.initialize();expect(controller.listPlugins().plugins).toEqual([]);
+ }finally{await controller?.stop();await rm(root,{recursive:true,force:true});await rm(pkg,{recursive:true,force:true})}
+});

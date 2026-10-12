@@ -8,7 +8,9 @@
 ~/.codex-launcher/
 ├── config.json                    # schemaVersion:2，共享 desktop 配置
 ├── config.json.v1.bak             # 从旧版迁移时保留的原始配置
-├── plugins.json                   # enabled、autoStart、known
+├── plugins.json                   # enabled、autoStart、known、removed
+├── plugin-repositories.json       # 可配置仓库与分支
+├── plugin-installations.json      # 已安装代码哈希及来源绑定
 ├── plugin-data/<id>/config.json   # 各插件独立配置
 └── plugins/<id>/
     ├── manifest.json
@@ -144,3 +146,13 @@ Windows 正常停止使用 taskkill 回收仍存活的插件进程树；worker �
 `main` 必须携带自身运行依赖。Mobile 的发布包已经内联其 Node 依赖、打包 Web，并包含兼容旧构建的源码；后者是构建输入，运行时通过 `ctx` 使用宿主，而不是读取 Launcher 源码。宿主 API 当前版本为 `1`。
 
 更新管理属于启动器主界面能力：`checkPluginUpdates`、`updatePlugin(id,{allowLocalChanges})`。插件后台和配置 iframe 不获授权修改其他插件。配置和启用策略不随 ZIP 更新；本地修改要求明确保留备份后覆盖，回滚不会重放业务写操作。
+
+## 仓库管理与删除
+
+主界面提供 `listPluginRepositories`、`addPluginRepository`、`editPluginRepository`、`setPluginRepositoryEnabled`、`removePluginRepository`；这些不是插件 iframe 或 `ctx.host` 的权限。官方仓库只在缺少初始配置时默认添加，空仓库列表代表用户已删除，不会自动恢复。
+
+第三方公开 GitHub 仓库也采用 schemaVersion=1 的顶层 `plugins.json`。`repository` 必须匹配添加的仓库；每个插件的 `git.url` 和 `release.url` 都指向同一仓库，Release 需为 ZIP 并附 SHA-256。源码 `git.path` 可为安全的相对路径或 `.`，Git ref 可采用该仓库自己的标签格式。当前不支持私有仓库凭据、GitLab 或任意下载域。
+
+`checkPluginUpdates` 仅读取目录。`updatePlugin(id,{repository,allowLocalChanges})` 才下载；同 ID 未安装插件必须指定来源，已安装插件禁止静默切换来源。旧安装记录自动归属原官方仓库。
+
+`uninstallPlugin(id)` 停止并清理目标插件请求，备份其代码，移除启用和自启策略及来源记录，保留独立配置。`plugins.json.removed` 防止内置模板在重启时重新复制。再次从仓库主动安装时清除此删除记录。删除失败会恢复代码与状态；其他插件不重载。

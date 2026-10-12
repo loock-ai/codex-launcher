@@ -1,5 +1,6 @@
 import {dirname} from 'node:path';
-import {PluginCatalog} from './plugin-catalog.js';
+import {PluginRepositories,type RepositoryInput} from './plugin-repositories.js';
+import {PluginCatalog,githubRepository,compareVersions,type CatalogPlugin,type PluginUpdate} from './plugin-catalog.js';
 import {PluginInstaller} from './plugin-installer.js';
 import {EventEmitter} from 'node:events';
 import {PluginManager,type PluginManagerOptions} from './plugin-runtime.js';
@@ -9,7 +10,7 @@ import type {DesktopSettings,LauncherHostStatus} from './plugin-contract.js';
 export interface LauncherDependencies {
  desktop?:DesktopServiceDeps;
  pluginRuntime?:PluginManagerOptions;
- pluginUpdates?:{catalog?:PluginCatalog;download?:(url:string)=>Promise<Buffer>};
+ pluginUpdates?:{catalog?:PluginCatalog;repositories?:PluginRepositories;download?:(url:string)=>Promise<Buffer>};
  system?:{openExternal(url:string):unknown;writeClipboard(text:string):unknown};
 }
 /** 通用应用壳：桌面共享能力、插件生命周期及受控系统操作。 */
@@ -18,6 +19,7 @@ export class LauncherController extends EventEmitter {
  private desktop!:DesktopService;
  private plugins:PluginManager;
  private catalog:PluginCatalog;
+ private repositories:PluginRepositories;
  private installer:PluginInstaller;
  private updateWasRunning=new Map<string,boolean>();
  private logs:string[]=[];
@@ -25,7 +27,9 @@ export class LauncherController extends EventEmitter {
  constructor(private configFile:string,packageRoot:string,private deps:LauncherDependencies={}){
   super();
   this.catalog=deps.pluginUpdates?.catalog??new PluginCatalog();
+  this.repositories=deps.pluginUpdates?.repositories??new PluginRepositories(dirname(configFile));
   this.installer=new PluginInstaller(dirname(configFile),{
+   snapshot:()=>this.plugins.strategySnapshot(),restorePolicy:policy=>this.plugins.restoreStrategy(policy as ReturnType<PluginManager['strategySnapshot']>),
    stop:async id=>{const p=this.plugins.list().plugins.find(p=>p.id===id);if(p&&!this.updateWasRunning.has(id))this.updateWasRunning.set(id,['running','waiting'].includes(p.state));if(p)await this.plugins.stop(id);},
    reload:id=>this.plugins.reloadPlugin(id),
    restore:async id=>{const p=this.plugins.list().plugins.find(p=>p.id===id);if(p?.enabled&&(this.updateWasRunning.get(id)||p.autoStart&&!this.updateWasRunning.has(id))){try{await this.plugins.start(id)}catch(e){if((e as {code?:string}).code!=='DESKTOP_NOT_READY')throw e;}}this.changed();}
@@ -36,6 +40,7 @@ export class LauncherController extends EventEmitter {
  async initialize(){
   this.config=await loadHostConfig(this.configFile);
   this.desktop=new DesktopService(this.config.desktop,{...this.deps.desktop,onEvent:(id,event)=>{this.plugins.sendEvent(id,event);this.changed();},onChange:()=>this.changed()});
+  await this.repositories.list().catch(e=>this.log('插件仓库配置错误：'+String(e)));
   await this.plugins.initialize();this.changed();return this.status();
  }
  private serialize<T>(fn:()=>Promise<T>){const result=this.queue.then(fn,fn);this.queue=result.catch(()=>{});return result;}
@@ -53,8 +58,25 @@ export class LauncherController extends EventEmitter {
   }
   return this.desktop.call(pluginId,method,params);
  }
- checkPluginUpdates(){return this.serialize(async()=>{const updates=await this.catalog.check(this.plugins.list().plugins,id=>this.installer.isModified(id));return Promise.all(updates.map(async p=>({...p,blockedReason:await this.installer.directoryIssue(p.id)})));});}
- updatePlugin(id:string,options:{allowLocalChanges?:boolean}={}){return this.serialize(async()=>{if(typeof id!=='string'||typeof options!=='object'||options===null||(options.allowLocalChanges!==undefined&&typeof options.allowLocalChanges!=='boolean'))throw Error('更新参数无效');const p=(await this.catalog.read()).plugins.find(p=>p.id===id);if(!p)throw Error('插件目录中未找到插件');try{const result=await this.installer.install(p,options);this.log(`${p.name} 已更新至 ${p.version}`);return result;}finally{this.updateWasRunning.delete(id);this.changed();}});}
+ uninstallPlugin(id:string){return this.serialize(async()=>{if(typeof id!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(id))throw Error('插件ID无效');await this.installer.sourceRepository(id);const result=await this.plugins.uninstall(id,()=>this.installer.forgetInstallation(id));this.log('插件 '+id+' 已删除，代码已备份，配置保留');this.changed();return result;});}
+ listPluginRepositories(){return this.serialize(()=>this.repositories.list());}
+ addPluginRepository(value:RepositoryInput){return this.serialize(()=>this.repositories.add(value));}
+ editPluginRepository(id:string,value:RepositoryInput){return this.serialize(()=>this.repositories.update(id,value));}
+ setPluginRepositoryEnabled(id:string,value:boolean){return this.serialize(()=>this.repositories.setEnabled(id,value));}
+ removePluginRepository(id:string){return this.serialize(()=>this.repositories.remove(id));}
+ private async availablePlugins(){if(this.deps.pluginUpdates?.catalog)return (await this.catalog.read()).plugins;const result=await this.repositories.catalogs();return result.catalogs.flatMap(c=>c.catalog.plugins);}
+ checkPluginUpdates(){return this.serialize(async()=>{
+  const plugins=await this.availablePlugins(),installed=this.plugins.list().plugins;
+  return Promise.all(plugins.map(async p=>{const local=installed.find(x=>x.id===p.id),owner=await this.installer.sourceRepository(p.id),source=p.sourceRepository??githubRepository(p.git.url);const conflict=plugins.filter(x=>x.id===p.id).length>1;
+   const directory=await this.installer.directoryIssue(p.id);return {...p,sourceRepository:source,installedVersion:local?.version,updateAvailable:!local||compareVersions(p.version,local.version)>0,compatible:p.compatibility.launcherApiVersion==='1',locallyModified:!!local&&await this.installer.isModified(p.id),sourceConflict:conflict,blockedReason:directory??(owner&&owner!==source?'已安装插件来自其他仓库，不允许替换来源':undefined)} as PluginUpdate;
+  }));
+ });}
+ updatePlugin(id:string,options:{allowLocalChanges?:boolean;repository?:string}={}){return this.serialize(async()=>{
+  if(typeof id!=='string'||typeof options!=='object'||options===null||(options.allowLocalChanges!==undefined&&typeof options.allowLocalChanges!=='boolean'))throw Error('更新参数无效');
+  const all=(await this.availablePlugins()).filter(p=>p.id===id);let repository=options.repository!==undefined?githubRepository(options.repository):await this.installer.sourceRepository(id);if(!repository&&all.length>1)throw Error('多个仓库提供同名插件，请明确选择来源');
+  const p=all.find(p=>!repository||(p.sourceRepository??githubRepository(p.git.url))===repository);if(!p)throw Error('原插件仓库已禁用、移除或未提供此插件');
+  try{const result=await this.installer.install(p,options);this.log(`${p.name} 已更新至 ${p.version}`);return result;}finally{this.updateWasRunning.delete(id);this.changed();}
+ });}
  pluginDirectory(){return this.plugins.directory;}
  listPlugins(){return this.plugins.list();}
  setPluginEnabled(id:string,enabled:boolean){return this.serialize(async()=>{const result=await this.plugins.setEnabled(id,enabled);this.changed();return result;});}

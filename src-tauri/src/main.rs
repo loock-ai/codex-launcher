@@ -76,6 +76,12 @@ fn allowed(method: &str) -> bool {
         "status"
             | "listPlugins"
             | "checkPluginUpdates"
+            | "listPluginRepositories"
+            | "uninstallPlugin"
+            | "addPluginRepository"
+            | "editPluginRepository"
+            | "setPluginRepositoryEnabled"
+            | "removePluginRepository"
             | "updatePlugin"
             | "setPluginEnabled"
             | "setPluginAutoStart"
@@ -167,6 +173,7 @@ fn plugin_path(raw: &str) -> Result<(String, String), String> {
 }
 fn show(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
         if let Err(error) = window.show() {
             eprintln!("显示主窗口失败: {error}");
         }
@@ -277,7 +284,7 @@ fn main() {
   { tray=tray.title("⌘"); }
   #[cfg(not(target_os="macos"))]
   if let Some(icon)=app.default_window_icon(){tray=tray.icon(icon.clone());}
-  tray.tooltip("Codex Launcher").menu(&menu).on_menu_event(|app,event|match event.id.as_ref(){"open"=>show(app),"quit"=>app.exit(0),_=>{}}).build(app)?;
+  tray.tooltip("Codex Launcher").menu(&menu).show_menu_on_left_click(false).on_tray_icon_event(|tray,event|{if matches!(event,tauri::tray::TrayIconEvent::Click{button:tauri::tray::MouseButton::Left,button_state:tauri::tray::MouseButtonState::Up,..}){show(tray.app_handle());}}).on_menu_event(|app,event|match event.id.as_ref(){"open"=>show(app),"quit"=>app.exit(0),_=>{}}).build(app)?;
   let window=app.get_webview_window("main").ok_or("主窗口未创建")?;
   window.center()?;
   show(app.handle());

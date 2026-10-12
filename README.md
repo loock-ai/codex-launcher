@@ -177,7 +177,11 @@ Dots 的房间、附件和身份处理见 [Dots 适配](docs/dots-adapter.md)。
 
 插件源码统一维护在 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins)，顶层 [plugins.json](https://github.com/loock-ai/codex-launcher-plugins/blob/main/plugins.json) 提供描述、版本、源码 Git 地址、宿主 API 版本、发布包和 SHA-256。
 
-在启动器“插件”页点击 **检查插件更新**，查看本地与远端版本，再点击 **更新插件**。检测到本地代码修改或来源尚未记录时，按钮为 **保留备份并更新**；点击后完整备份现有代码。插件 API 不兼容时，需要先升级 Launcher。
+在启动器“插件”页，同一工具行提供 **检查插件更新**、**重新加载插件**、**打开插件目录** 和 **插件仓库**。检查只读取目录，不下载插件包；选择具体插件的 **更新插件** 或 **安装插件** 后才下载、校验并安装。检测到本地代码修改或来源尚未记录时，按钮为 **保留备份并更新**；点击后完整备份现有代码。插件 API 不兼容时，需要先升级 Launcher。
+
+“插件仓库”支持添加、编辑地址与分支、启用／禁用和删除公开 GitHub 仓库；每个仓库顶层提供 `plugins.json`。官方仓库首次默认配置，也可修改或删除，重启不恢复。配置保存在 `~/.codex-launcher/plugin-repositories.json`。一个仓库失效不阻止检查其他仓库，已安装插件从原来源更新。同名未安装插件必须明确选择仓库；已绑定来源的插件不能被其他仓库覆盖。
+
+每张插件卡片提供 **删除插件**。删除会停止目标插件、备份代码并清除安装来源及启用策略，保留 `plugin-data/<id>/` 中的配置；重启不会重新复制已删除的内置插件，其他插件继续运行。
 
 更新仅替换 `~/.codex-launcher/plugins/<id>/`。共享设置、启用和自动启动策略以及 `plugin-data/<id>/` 中的配置和访问口令保留；加载失败会回滚代码。代码备份保存在 `plugin-backups/<id>/`。一个插件更新不重载其他插件。
 
@@ -241,3 +245,5 @@ npm run package:tauri
 ```
 
 源码构建需要 Node.js、Rust stable；macOS 需要 Xcode Command Line Tools，Windows 需要 Microsoft C++ Build Tools。Windows 安装包使用 NSIS，首次运行需 WebView2；具体构建和验收状态见桌面发布文档。Windows 桌面应用路径填写实际 `.exe` 路径，默认值仅作位置提示。
+
+状态栏／托盘图标左键单击直接显示并聚焦启动器窗口，已打开时不会隐藏；右键保留菜单。

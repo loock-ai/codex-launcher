@@ -21,6 +21,12 @@ async function writeClipboard(text:string){await runPlatformCommand(clipboardCom
 export async function dispatchSidecar(controller:LauncherController,method:string,args:unknown[]):Promise<unknown>{
  switch(method){
   case 'status':count(args,0);return controller.status();
+  case 'uninstallPlugin':count(args,1);id(args[0]);return controller.uninstallPlugin(args[0]);
+  case 'listPluginRepositories':count(args,0);return controller.listPluginRepositories();
+  case 'addPluginRepository':count(args,1);return controller.addPluginRepository(args[0] as any);
+  case 'editPluginRepository':count(args,2);id(args[0]);return controller.editPluginRepository(args[0],args[1] as any);
+  case 'setPluginRepositoryEnabled':count(args,2);id(args[0]);return controller.setPluginRepositoryEnabled(args[0],args[1] as boolean);
+  case 'removePluginRepository':count(args,1);id(args[0]);return controller.removePluginRepository(args[0]);
   case 'checkPluginUpdates':count(args,0);return controller.checkPluginUpdates();
   case 'updatePlugin':count(args,2);id(args[0]);return controller.updatePlugin(args[0],args[1] as {allowLocalChanges?:boolean});
   case 'listPlugins':count(args,0);return controller.listPlugins();
