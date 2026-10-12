@@ -536,3 +536,28 @@ button, a, summary, [role="button"] { -webkit-tap-highlight-color: transparent; 
 .backend-host-toggle input { width: 18px; height: 18px; margin: 0; accent-color: #171717; }
 .backend-host-picker > p { color: #777; font-size: 13px; line-height: 1.6; }
 .backend-host-picker .backend-host-choices { margin-bottom: 18px; }
+
+/* 桌面模式由设备 UA 选择，窄窗口仍保持两栏。 */
+.desktop-client, .desktop-layout { --desktop-sidebar-width: min(300px, 38vw); --desktop-content-center: calc(50% + var(--desktop-sidebar-width) / 2); }
+.desktop-layout { width: 100%; min-height: 100dvh; }
+.desktop-layout > .backend-workspace { margin-left: var(--desktop-sidebar-width); min-width: 0; }
+.desktop-layout .app-shell { width: 100%; max-width: none; }
+.desktop-layout .conversation { padding-inline: 24px; }
+.desktop-layout .conversation-header { width: min(100%, 900px); margin-inline: auto; grid-template-columns: minmax(0,1fr) auto; }
+.desktop-layout .sidebar-toggle { display: none; }
+.desktop-layout .conversation-scroll-content { width: min(100%, 900px); margin-inline: auto; }
+.desktop-layout .composer-wrap { left: var(--desktop-content-center); width: min(calc(100% - var(--desktop-sidebar-width)), 948px); padding-inline: 24px; }
+.desktop-layout .conversation-sidebar-layer { left: 0; width: var(--desktop-sidebar-width); transform: none; visibility: visible; pointer-events: auto; transition: none; }
+.desktop-layout .conversation-sidebar { position: relative; width: 100%; height: 100dvh; transform: none; transition: none; box-shadow: none; border-right: 1px solid #ededed; }
+.desktop-layout .thread-list-page { scrollbar-width: none; }
+.desktop-layout .thread-list-page::-webkit-scrollbar { display: none; }
+.desktop-layout .list-header { gap: 4px; }
+.desktop-layout .list-header h1 { font-size: 17px; }
+.desktop-layout .list-header .round-button { width: 32px; height: 36px; font-size: 12px; }
+.desktop-layout .list-header .round-button svg { width: 19px; height: 19px; }
+.desktop-layout .list-actions { left: 0; right: auto; width: var(--desktop-sidebar-width); }
+.desktop-layout .backend-workspace .error-banner, .desktop-layout .conversation-action-menu, .desktop-layout .notice-banner, .desktop-layout .backend-attention { left: var(--desktop-content-center); max-width: calc(100vw - var(--desktop-sidebar-width) - 48px); }
+.desktop-layout .conversation-sidebar .error-banner { left: calc(var(--desktop-sidebar-width) / 2); width: calc(var(--desktop-sidebar-width) - 24px); bottom: 74px; }
+.desktop-layout .composer-popover { left: max(calc(var(--desktop-sidebar-width) + 24px), calc(var(--desktop-content-center) - 450px)); max-width: calc(100vw - var(--desktop-sidebar-width) - 48px); }
+.desktop-dots-panel { position: fixed; inset: 0 0 0 var(--desktop-sidebar-width); z-index: 5; background: #fff; }
+.desktop-dots-panel .dots-page { width: min(100%, 948px); }

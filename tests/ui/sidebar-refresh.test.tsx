@@ -32,3 +32,9 @@ describe("侧边栏刷新", () => {
     expect(source).not.toContain("60_000");
   });
 });
+it('桌面常驻侧栏不能被关闭，手动刷新仍可用',()=>{
+ const refresh=vi.fn();const {result}=renderHook(()=>useSidebarRefresh(refresh,true));
+ act(()=>result.current.closeSidebar());expect(result.current.sidebarOpen).toBe(true);
+ act(()=>result.current.openSidebar());expect(refresh).not.toHaveBeenCalled();
+ act(()=>result.current.refresh());expect(refresh).toHaveBeenCalledOnce();
+});

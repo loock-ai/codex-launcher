@@ -1,0 +1,1 @@
+{"identifier":"main","description":"仅启动器主窗口可以使用更新与事件 API","windows":["main"],"permissions":["core:event:allow-listen","core:event:allow-unlisten","updater:default"]}

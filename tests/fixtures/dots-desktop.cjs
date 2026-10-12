@@ -34,5 +34,5 @@ app.whenReady().then(()=>{
   return new Response('<!doctype html><meta charset="utf-8"><h1>Dots 受控宿主</h1><script type="module" src="./assets/app-shared-6c00c2afcf84.js"></script>',{headers:{'content-type':'text/html'}});
  });
  desktop=new BrowserWindow({show:false,webPreferences:{preload:path.join(__dirname,'dots-preload.cjs'),contextIsolation:true,nodeIntegration:false}});desktop.loadURL('app://-/index.html');
- phone=new BrowserWindow({show:false,webPreferences:{contextIsolation:true,nodeIntegration:false}});phone.loadURL('about:blank');
+ phone=new BrowserWindow({show:false,webPreferences:{contextIsolation:true,nodeIntegration:false}});phone.webContents.setUserAgent(process.env.CDP_FIXTURE_PHONE_UA||'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1');phone.loadURL('about:blank');
 });

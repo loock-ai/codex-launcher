@@ -1,5 +1,5 @@
 appId: vip.loock.codex-mobile-launcher
-productName: Codex Mobile Launcher
+productName: Codex 启动器
 asar: true
 npmRebuild: false
 extraMetadata:
@@ -8,7 +8,9 @@ files:
   - launcher/main.cjs
   - launcher/commands.cjs
   - launcher/preload.cjs
+  - launcher/plugin-protocol.cjs
   - launcher-ui/**
+  - plugins/**
   - npm-dist/**
   - dist/**
   - package.json

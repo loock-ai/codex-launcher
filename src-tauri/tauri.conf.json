@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Codex 启动器",
+  "version": "0.1.0",
+  "identifier": "vip.loock.codex-launcher",
+  "build": {
+    "frontendDist": "../launcher-ui",
+    "beforeBuildCommand": "npm run build:tauri",
+    "beforeDevCommand": "npm run build:tauri"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Codex 启动器",
+        "width": 420,
+        "height": 660,
+        "resizable": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; frame-src launcher-plugin: http://launcher-plugin.localhost; object-src 'none'; base-uri 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "resources": {
+      "resources/backend/": "backend/"
+    },
+    "createUpdaterArtifacts": false,
+    "macOS": {
+      "minimumSystemVersion": "13.5"
+    },
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://github.com/loock-ai/codex-mobile/releases/download/desktop-updates/latest.json"
+      ]
+    }
+  }
+}

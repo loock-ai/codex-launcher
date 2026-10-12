@@ -5,8 +5,9 @@ exports.createCommandHandler = function ({ready, start, openWeb, showPanel}) {
   const open = argv.includes('--open-web');
   const action = async () => {
    await ready;
-   if (open) { await start(); await openWeb(); }
-   else showPanel();
+   if (!open) showPanel();
+   await start();
+   if (open) await openWeb();
   };
   const result = queue.then(action, action);
   queue = result.catch(() => {});

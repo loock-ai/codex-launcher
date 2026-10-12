@@ -260,7 +260,7 @@ export function ConversationPage({
     <RemoteFileCwdContext.Provider value={active.cwd??null}><section className="conversation">
       <header className="conversation-header">
         <button
-          className="round-button"
+          className="round-button sidebar-toggle"
           aria-label={t("打开会话列表")}
           onClick={onBack}
         >

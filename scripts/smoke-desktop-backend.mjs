@@ -1,0 +1,30 @@
+import {spawn} from 'node:child_process';
+import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {resolve,join} from 'node:path';
+import {createServer} from 'node:net';
+import {createInterface} from 'node:readline';
+const target=process.env.TAURI_ENV_TARGET_TRIPLE??(process.platform==='win32'?'x86_64-pc-windows-msvc':process.arch==='arm64'?'aarch64-apple-darwin':'x86_64-apple-darwin');
+const binary=process.execPath,root=resolve('src-tauri/resources/backend');
+if(Number(process.versions.node.split('.')[0])<20)throw Error('需要用户 Node.js 20 或以上版本');
+const profile=await mkdtemp(join(tmpdir(),'desktop-ci-smoke-'));
+const port=await new Promise((done,fail)=>{const server=createServer();server.on('error',fail);server.listen(0,'127.0.0.1',()=>{const p=server.address().port;server.close(()=>done(p));});});
+await mkdir(join(profile,'plugin-data/mobile'),{recursive:true});
+await writeFile(join(profile,'plugin-data/mobile/config.json'),JSON.stringify({mode:'external',gatewayPort:port,appServerPort:port===65535?port-1:port+1,host:'127.0.0.1',token:'controlled-smoke-token-123456',upstreamUrl:'ws://127.0.0.1:1'}));
+await writeFile(join(profile,'plugins.json'),JSON.stringify({enabled:['mobile'],autoStart:[],known:['mobile','desktop-thread-time']}));
+const child=spawn(binary,[join(root,'npm-dist/server/launcher/sidecar.js'),'--config',join(profile,'config.json'),'--root',root,'--no-desktop'],{stdio:['pipe','pipe','pipe'],windowsHide:true});
+let sequence=0,readyResolve,readyReject;const pending=new Map();const ready=new Promise((ok,no)=>{readyResolve=ok;readyReject=no});let diagnostics='';
+child.stderr.on('data',data=>{diagnostics=(diagnostics+data).slice(-4000)});
+child.on('error',readyReject);
+const exited=new Promise(resolve=>child.once('exit',code=>{readyReject(Error('后台提前退出 '+diagnostics));for(const p of pending.values())p.reject(Error('后台已退出'));resolve(code)}));
+const lines=createInterface({input:child.stdout});lines.on('line',line=>{const message=JSON.parse(line);if(message.event==='ready')readyResolve();const item=pending.get(message.id);if(item){pending.delete(message.id);message.error?item.reject(Error(message.error.message)):item.resolve(message.result)}});
+const call=(method,...args)=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});child.stdin.write(JSON.stringify({id,method,args})+'\n')});
+const deadline=setTimeout(()=>{console.error('后台冒烟超时');child.kill();},45000);
+try{
+ await ready;await call('startPlugin','mobile');
+ const response=await fetch(`http://127.0.0.1:${port}/`);if(!response.ok||!(await response.text()).includes('<html'))throw Error('Web静态资源未就绪');
+ await call('stopPlugin','mobile');
+ let stopped=false;try{await fetch(`http://127.0.0.1:${port}/`)}catch{stopped=true}if(!stopped)throw Error('停止后端口仍开放');
+ await call('shutdown');if(await exited!==0)throw Error('后台未正常退出 '+diagnostics);
+ console.log(JSON.stringify({target,node:process.version,runtime:'user',sidecar:'passed',http:200,stopped:true}));
+}finally{clearTimeout(deadline);child.stdin.end();if(child.exitCode===null)child.kill();lines.close();await exited;await rm(profile,{recursive:true,force:true});}

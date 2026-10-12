@@ -1,3 +1,4 @@
+import {isDesktopEnvironment} from './ui/desktop-layout';
 import {DotsPage} from "./features/dots/DotsPage";
 import {
   FormEvent,
@@ -1994,6 +1995,7 @@ function BackendWorkspace({
 
 export function App() {
   useI18n();
+  const desktopLayout=isDesktopEnvironment(window.navigator);
   const [initialRegistry] = useState<BackendRegistry>(() => {
     const token = new URLSearchParams(window.location.search).get("token") ?? "";
     const initial = loadBackendRegistry(
@@ -2015,14 +2017,16 @@ export function App() {
     };
     window.addEventListener("hashchange",changed);return()=>window.removeEventListener("hashchange",changed);
   },[]);
-  return <><div hidden={dotsOpen}><AppBootstrap initialRegistry={initialRegistry}/></div>
-    {dotsOpen&&<DotsPage backends={dotsBackends} onBack={()=>{window.location.hash="";setDotsOpen(false);}}/>}</>;
+  return <div className={desktopLayout?"desktop-client":"mobile-client"}><div hidden={dotsOpen&&!desktopLayout}><AppBootstrap initialRegistry={initialRegistry} conversationHidden={dotsOpen}/></div>
+    {dotsOpen&&<div className={desktopLayout?"desktop-dots-panel":""}><DotsPage backends={dotsBackends} onBack={()=>{window.location.hash="";setDotsOpen(false);}}/></div>}</div>;
 }
 
 export function AppBootstrap({
   initialRegistry,
+  conversationHidden=false,
 }: {
   initialRegistry: BackendRegistry;
+  conversationHidden?: boolean;
 }) {
   const [registry, setRegistry] = useState(initialRegistry);
   const [managerOpen, setManagerOpen] = useState(
@@ -2034,6 +2038,7 @@ export function AppBootstrap({
     return (
       <ConfiguredApp
         initialRegistry={registry}
+        conversationHidden={conversationHidden}
         appUpdate={appUpdate}
       />
     );
@@ -2088,10 +2093,13 @@ export function AppBootstrap({
 function ConfiguredApp({
   initialRegistry,
   appUpdate,
+  conversationHidden=false,
 }: {
   initialRegistry: BackendRegistry;
   appUpdate: AppUpdateController;
+  conversationHidden?: boolean;
 }) {
+  const desktopLayout=isDesktopEnvironment(window.navigator);
   const [registry, setRegistry] = useState(initialRegistry);
   const [runtimeSelection,setRuntimeSelection]=useState<string|null>(null);
   const [summaries, setSummaries] = useState<
@@ -2126,7 +2134,7 @@ function ConfiguredApp({
     openSidebar,
     closeSidebar,
     refresh: refreshAllBackends,
-  } = useSidebarRefresh(resetListExpansion);
+  } = useSidebarRefresh(resetListExpansion,desktopLayout);
   const saveDiscoveredHosts=useCallback((source:BackendConfig,hosts:DesktopHost[])=>{
     setRegistry(current=>{
       const target=current.backends.find(b=>b.id===source.id);
@@ -2182,7 +2190,7 @@ function ConfiguredApp({
 
   useEffect(() => {
     if (
-      sidebarOpen &&
+      !desktopLayout && sidebarOpen &&
       !(window.history.state as AnyRecord | null)?.codexMobileSidebar
     ) {
       window.history.pushState(
@@ -2193,9 +2201,10 @@ function ConfiguredApp({
         "",
       );
     }
-  }, [sidebarOpen]);
+  }, [sidebarOpen,desktopLayout]);
 
   useEffect(() => {
+    if(desktopLayout)return;
     const handlePopState = () => {
       if (sidebarOpen) closeSidebar();
     };
@@ -2231,7 +2240,7 @@ function ConfiguredApp({
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [closeSidebar, openSidebar, sidebarOpen]);
+  }, [closeSidebar, openSidebar, sidebarOpen,desktopLayout]);
 
   const enabledBackends = useMemo(
     () => runtimeBackends.filter((backend) => backend.enabled),
@@ -2439,6 +2448,7 @@ function ConfiguredApp({
 
   const openThread = useCallback(
     (item: AggregatedThreadItem) => {
+      if(desktopLayout&&window.location.hash==="#dots")window.location.hash="";
       selectBackend(item.backendId);
       setCommand({
         id: ++commandIdRef.current,
@@ -2448,10 +2458,11 @@ function ConfiguredApp({
       });
       closeSidebar();
     },
-    [closeSidebar, selectBackend],
+    [closeSidebar, selectBackend,desktopLayout],
   );
 
   const startNewChat = useCallback(() => {
+    if(desktopLayout&&window.location.hash==="#dots")window.location.hash="";
     const savedBackendId = window.localStorage.getItem(
       "codex-mobile:new-chat-backend",
     );
@@ -2475,6 +2486,7 @@ function ConfiguredApp({
     closeSidebar();
   }, [
     closeSidebar,
+    desktopLayout,
     listBackendId,
     mountedBackends,
     selectBackend,
@@ -2514,17 +2526,17 @@ function ConfiguredApp({
   }
 
   return (
-    <>
+    <div className={desktopLayout?"desktop-layout":"mobile-layout"}>
       {mountedBackends.map((backend) => (
         <div
           className="backend-workspace"
-          hidden={backend.id !== selectedBackend.id}
+          hidden={backend.id !== selectedBackend.id || (desktopLayout&&conversationHidden)}
           key={`${backend.id}:${backend.baseUrl}:${backend.token}`}
         >
           <BackendWorkspace
             backend={backend}
             conversationVisible={
-              backend.id === selectedBackend.id && !sidebarOpen
+              backend.id === selectedBackend.id && !conversationHidden && (desktopLayout || !sidebarOpen)
             }
             backends={runtimeBackends}
             summaries={summaries}
@@ -2541,7 +2553,8 @@ function ConfiguredApp({
         className={`conversation-sidebar-layer${
           sidebarOpen ? " open" : ""
         }`}
-        aria-hidden={!sidebarOpen}
+        aria-hidden={!desktopLayout && !sidebarOpen}
+        inert={!desktopLayout && !sidebarOpen}
       >
         <aside className="conversation-sidebar" aria-label={t("会话列表")}>
           <ThreadListPage
@@ -2572,12 +2585,12 @@ function ConfiguredApp({
             onRetryProject={retryProject}
           />
         </aside>
-        <button
+        {!desktopLayout&&<button
           className="conversation-sidebar-scrim"
           type="button"
           aria-label={t("关闭会话列表")}
           onClick={closeSidebar}
-        />
+        />}
       </div>
       <BackendAttentionBanner
         backends={runtimeBackends}
@@ -2615,6 +2628,6 @@ function ConfiguredApp({
         onInstall={appUpdate.install}
         onRetry={appUpdate.install}
       />
-    </>
+    </div>
   );
 }

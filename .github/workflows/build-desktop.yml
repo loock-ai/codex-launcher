@@ -1,0 +1,168 @@
+name: Build Desktop macOS and Windows
+
+on:
+  push:
+    branches: [main, 'codex/tauri-desktop-*', 'feat/desktop-cdp-launcher']
+    paths:
+      - 'src-tauri/**'
+      - 'launcher/**'
+      - 'server/**'
+      - 'src/**'
+      - 'public/**'
+      - 'plugins/**'
+      - 'scripts/build-*.mjs'
+      - 'scripts/desktop-release*.mjs'
+      - 'scripts/smoke-desktop-backend.mjs'
+      - 'desktop-version.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '*config*.json'
+      - 'vite*.ts'
+      - '.github/workflows/build-desktop.yml'
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: '可选独立桌面版本，例如 0.1.1'
+        type: string
+        required: false
+      publish:
+        description: '发布桌面 Release 并更新桌面频道（仅 main）'
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.mode.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: mode
+        env:
+          REQUEST_PUBLISH: ${{ inputs.publish }}
+          HAS_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
+        run: node scripts/desktop-release.mjs mode
+      - id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_VERSION: ${{ inputs.release_version }}
+        run: node scripts/desktop-release.mjs version
+
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  build:
+    needs: [version, verify]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            target: aarch64-apple-darwin
+            arch: aarch64
+            platform: darwin-aarch64
+            bundles: dmg,app
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            arch: x86_64
+            platform: darwin-x86_64
+            bundles: dmg,app
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            arch: x86_64
+            platform: windows-x86_64
+            bundles: nsis
+    runs-on: ${{ matrix.runner }}
+    env:
+      DESKTOP_VERSION: ${{ needs.version.outputs.version }}
+      DESKTOP_ARCH: ${{ matrix.arch }}
+      DESKTOP_PLATFORM: ${{ matrix.platform }}
+      DESKTOP_BUNDLES: ${{ matrix.bundles }}
+      TAURI_ENV_TARGET_TRIPLE: ${{ matrix.target }}
+      SIGNED: ${{ needs.version.outputs.publish }}
+      TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: npm ci
+      - name: Configure desktop release
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
+        run: node scripts/desktop-release.mjs config
+      - name: Package desktop application
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npm run package:tauri -- --target "$TAURI_ENV_TARGET_TRIPLE" --config tauri.release.conf.json --bundles "$DESKTOP_BUNDLES"
+      - name: Smoke backend with user Node
+        run: node scripts/smoke-desktop-backend.mjs
+      - name: Verify and collect artifacts
+        run: node scripts/desktop-release.mjs collect "src-tauri/target/$TAURI_ENV_TARGET_TRIPLE/release/bundle" desktop-artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: desktop-artifacts/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: [version, verify, build]
+    if: github.ref == 'refs/heads/main' && needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: desktop-artifacts
+          merge-multiple: true
+      - name: Publish complete desktop release then update channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESKTOP_VERSION: ${{ needs.version.outputs.version }}
+          TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
+        run: node scripts/desktop-release.mjs publish desktop-artifacts
