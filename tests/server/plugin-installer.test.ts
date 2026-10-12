@@ -50,3 +50,12 @@ it('同一宿主进程真实重载新版后台，并保留另一个插件和独�
  await controller.updatePlugin('demo',{allowLocalChanges:true});expect(await controller.invokePlugin('demo','version',{})).toBe('new');expect(await controller.invokePlugin('other','version',{})).toBe('old');expect(controller.listPlugins().plugins.find(x=>x.id==='other')?.state).toBe('running');expect(await readFile(join(root,'plugin-data/demo/config.json'),'utf8')).toBe('{"setting":"kept"}');
  }finally{await controller?.stop();await rm(root,{recursive:true,force:true})}
 });
+it('目录名与ID不一致或被其他ID占用时拒绝更新，不生成重复插件',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'plugin-alias-'));try{
+ await mkdir(join(root,'plugins/custom-name'),{recursive:true});await writeFile(join(root,'plugins/custom-name/manifest.json'),JSON.stringify({...manifest,version:'1.0.0'}));await writeFile(join(root,'plugins/custom-name/main.cjs'),'user-code');
+ const bytes=await zip({'manifest.json':JSON.stringify(manifest),'main.cjs':'new'});const installer=new PluginInstaller(root,{stop:async()=>{},reload:async()=>{},restore:async()=>{}},async()=>bytes);
+ await expect(installer.install(entry(bytes),{allowLocalChanges:true})).rejects.toThrow('目录');expect(await readFile(join(root,'plugins/custom-name/main.cjs'),'utf8')).toBe('user-code');
+ await rm(join(root,'plugins/custom-name'),{recursive:true});await mkdir(join(root,'plugins/demo'));await writeFile(join(root,'plugins/demo/manifest.json'),JSON.stringify({...manifest,id:'other'}));await writeFile(join(root,'plugins/demo/main.cjs'),'other-code');
+ await expect(installer.install(entry(bytes),{allowLocalChanges:true})).rejects.toThrow('目录');expect(await readFile(join(root,'plugins/demo/main.cjs'),'utf8')).toBe('other-code');
+ }finally{await rm(root,{recursive:true,force:true})}
+});

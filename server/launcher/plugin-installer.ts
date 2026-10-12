@@ -26,10 +26,21 @@ export class PluginInstaller{
  constructor(private root:string,private lifecycle:Lifecycle,private download:(url:string)=>Promise<Buffer>=downloadPluginBytes){}
  private registryPath(){return join(this.root,'plugin-installations.json')}
  private async registry():Promise<Record<string,{version:string;codeHash:string}>>{try{return JSON.parse(await readFile(this.registryPath(),'utf8'))}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return {};throw e}}
- async isModified(id:string){const path=join(this.root,'plugins',id);if(!await exists(path))return false;const r=(await this.registry())[id];if(!r)return true;return r.codeHash!==await pluginTreeHash(path);}
+ async directoryIssue(id:string):Promise<string|undefined>{
+  let dirs;try{dirs=await readdir(join(this.root,'plugins'),{withFileTypes:true})}catch(e){if((e as NodeJS.ErrnoException).code==='ENOENT')return;throw e}
+  for(const dir of dirs){
+   if(dir.name===id&&(!dir.isDirectory()||dir.isSymbolicLink()))return '目标插件目录不是普通目录';
+   if(!dir.isDirectory()||dir.isSymbolicLink())continue;
+   let manifest;try{manifest=JSON.parse(await readFile(join(this.root,'plugins',dir.name,'manifest.json'),'utf8'))}catch{if(dir.name===id)return '目标插件目录缺少有效manifest';continue}
+   if(manifest?.id===id&&dir.name!==id)return `目录 ${dir.name} 与插件 ID ${id} 不一致，请先重命名目录后更新`;
+   if(dir.name===id&&manifest?.id!==id)return '目标插件目录已被其他插件ID占用';
+  }
+ }
+ async isModified(id:string){if(await this.directoryIssue(id))return true;const path=join(this.root,'plugins',id);if(!await exists(path))return false;const r=(await this.registry())[id];if(!r)return true;return r.codeHash!==await pluginTreeHash(path);}
  install(plugin:CatalogPlugin,options:{allowLocalChanges?:boolean}={}){const work=this.queue.then(()=>this.perform(plugin,options));this.queue=work.catch(()=>{});return work;}
  private async perform(plugin:CatalogPlugin,options:{allowLocalChanges?:boolean}){
   validatePluginCatalog({schemaVersion:1,repository:'https://github.com/loock-ai/codex-launcher-plugins',plugins:[plugin]});if(plugin.compatibility.launcherApiVersion!=='1')throw Error('插件需要新版宿主API，请升级Launcher');
+  const directoryIssue=await this.directoryIssue(plugin.id);if(directoryIssue)throw Error(directoryIssue);
   const bytes=await this.download(plugin.release.url);if(createHash('sha256').update(bytes).digest('hex')!==plugin.release.sha256)throw Error('插件包哈希校验失败');
   const target=join(this.root,'plugins',plugin.id);const hadOld=await exists(target);if(hadOld&&await this.isModified(plugin.id)&&!options.allowLocalChanges)throw Object.assign(Error('本地插件有修改或来源未记录，请确认保留备份后更新'),{code:'LOCAL_CHANGES'});
   if(hadOld){const old=JSON.parse(await readFile(join(target,'manifest.json'),'utf8'));if(compareVersions(plugin.version,old.version)<0)throw Error('禁止降级插件');}

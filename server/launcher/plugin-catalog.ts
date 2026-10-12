@@ -3,7 +3,7 @@ import type {PluginSummary} from './plugin-contract.js';
 export const PLUGIN_CATALOG_URL='https://raw.githubusercontent.com/loock-ai/codex-launcher-plugins/main/plugins.json';
 export interface CatalogPlugin{id:string;name:string;description:string;version:string;git:{url:string;path:string;ref:string;commit:string};compatibility:{launcherApiVersion:string;node:string};release:{url:string;sha256:string}}
 export interface Catalog{schemaVersion:1;repository:string;plugins:CatalogPlugin[]}
-export interface PluginUpdate extends CatalogPlugin{installedVersion?:string;updateAvailable:boolean;compatible:boolean;locallyModified:boolean}
+export interface PluginUpdate extends CatalogPlugin{installedVersion?:string;updateAvailable:boolean;compatible:boolean;locallyModified:boolean;blockedReason?:string}
 export const versionPattern=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 export function compareVersions(a:string,b:string){if(!versionPattern.test(a)||!versionPattern.test(b))throw Error('插件版本无效');const x=a.split('.').map(Number),y=b.split('.').map(Number);return x[0]-y[0]||x[1]-y[1]||x[2]-y[2];}
 export function validatePluginCatalog(raw:unknown):Catalog{

@@ -53,7 +53,7 @@ export class LauncherController extends EventEmitter {
   }
   return this.desktop.call(pluginId,method,params);
  }
- checkPluginUpdates(){return this.serialize(()=>this.catalog.check(this.plugins.list().plugins,id=>this.installer.isModified(id)));}
+ checkPluginUpdates(){return this.serialize(async()=>{const updates=await this.catalog.check(this.plugins.list().plugins,id=>this.installer.isModified(id));return Promise.all(updates.map(async p=>({...p,blockedReason:await this.installer.directoryIssue(p.id)})));});}
  updatePlugin(id:string,options:{allowLocalChanges?:boolean}={}){return this.serialize(async()=>{if(typeof id!=='string'||typeof options!=='object'||options===null||(options.allowLocalChanges!==undefined&&typeof options.allowLocalChanges!=='boolean'))throw Error('更新参数无效');const p=(await this.catalog.read()).plugins.find(p=>p.id===id);if(!p)throw Error('插件目录中未找到插件');try{const result=await this.installer.install(p,options);this.log(`${p.name} 已更新至 ${p.version}`);return result;}finally{this.updateWasRunning.delete(id);this.changed();}});}
  pluginDirectory(){return this.plugins.directory;}
  listPlugins(){return this.plugins.list();}
