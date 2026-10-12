@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   isThreadRunning,
   relativeTime,
@@ -87,7 +88,11 @@ export function ThreadListPage({
     : undefined;
   const allGroups = splitAllThreads(visibleThreads);
   const projectGroups = groupThreadsByProject(visibleThreads, projectDirectories);
-  const renderNow = Math.floor(Date.now() / 1000);
+  const [renderNow, setRenderNow] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const timer = setInterval(() => setRenderNow(Math.floor(Date.now() / 1000)), 30000);
+    return () => clearInterval(timer);
+  }, []);
   const renderRow = (
     thread: AggregatedThreadItem,
     showSource: boolean,

@@ -5,3 +5,18 @@ html,body,.launcher,.launcher *{scrollbar-width:none}
 
 .plugin-actions{display:flex;gap:8px;margin-bottom:12px}.plugin-actions button{flex:1;font-size:12px}.plugin-directory{display:block;font-size:10px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere;margin-bottom:12px}.plugin-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:12px;margin-bottom:10px}.plugin-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}.plugin-toggle span{min-width:0}.plugin-toggle small{font-size:10px;color:var(--muted);margin-left:8px}.plugin-toggle input{width:17px;height:17px;min-width:17px;padding:0;accent-color:var(--accent)}.plugin-card p{color:var(--muted);font-size:12px;line-height:1.5;margin:8px 0}.plugin-state{font-size:11px;color:var(--muted)}.plugin-state.active{color:#23824c}.plugin-state.error,.plugin-card .plugin-error{color:#b33924}.plugin-error{overflow-wrap:anywhere}
 .plugin-frame{display:block;width:100%;height:440px;border:0;background:#fff;margin-top:12px}.plugin-toggle{margin:8px 0}.plugin-card .plugin-actions{margin-top:12px}.plugin-state.running{color:#047857}.plugin-state.error{color:#b91c1c}
+
+/* 紧凑插件列表：状态随标题显示，开关与操作共享横排。 */
+.launcher{padding:16px;min-height:100vh}
+header,nav{margin-bottom:16px}
+.plugin-card{padding:12px;margin-bottom:8px}
+.plugin-card-header{display:flex;align-items:center;gap:7px;min-width:0}
+.plugin-card-header small{font-size:10px;color:var(--muted)}
+.plugin-card-header .plugin-state{margin-left:auto;white-space:nowrap}
+.plugin-card p{margin:6px 0 10px}
+.plugin-card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.plugin-toggles{display:flex;align-items:center;gap:14px}
+.plugin-card .plugin-toggle{margin:0;gap:6px;font-size:12px}
+.plugin-card .plugin-actions{margin:0;gap:6px}
+.plugin-card .plugin-actions button{flex:none;padding:5px 9px}
+.plugin-frame{height:calc(100vh - 210px);min-height:360px}

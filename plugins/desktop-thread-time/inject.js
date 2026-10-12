@@ -74,7 +74,7 @@ function identity(row) {
   return { id, host, key: JSON.stringify([host, id]) };
 }
 function timestamp(value) {
-  // 原生 updatedAt 是 Unix 秒。缺失时间不以创建时间或当前时间替代。
+  // 原生时间是 Unix 秒。缺失时间不以创建时间或当前时间替代。
   return typeof value === 'number' && Number.isFinite(value) && value > 0 && value < 1e11 ? value : null;
 }
 function render(rows) {
@@ -103,7 +103,10 @@ function render(rows) {
     if (!label) { label = document.createElement('span'); label.setAttribute(marker, ''); labels.add(label); }
     if (anchor.nextElementSibling !== label) anchor.after(label);
     const elapsed = Math.max(0, Math.floor(Date.now() / 1000 - time));
-    const text = elapsed < 60 ? '刚刚' : elapsed < 3600 ? `${Math.floor(elapsed / 60)} 分钟` : elapsed < 86400 ? `${Math.floor(elapsed / 3600)} 小时` : `${Math.floor(elapsed / 86400)} 天`;
+    const days = Math.floor(elapsed / 86400);
+    const hours = Math.floor(elapsed / 3600) % 24;
+    const minutes = Math.floor(elapsed / 60) % 60;
+    const text = elapsed < 60 ? '刚刚' : days ? `${days}d` : `${hours ? `${hours}h` : ''}${minutes ? `${hours ? String(minutes).padStart(2, '0') : minutes}m` : ''}`;
     if (label.textContent !== text) label.textContent = text;
     const title = new Date(time * 1000).toLocaleString();
     if (label.title !== title) label.title = title;
@@ -152,7 +155,7 @@ async function refresh() {
             const entries = track(await request);
             if (stopped) break;
             if (Array.isArray(entries)) for (const entry of entries) {
-              if (entry.hostId === host && items.has(entry.threadId)) metadata.push({ id: entry.threadId, updatedAt: entry.sourceUpdatedAt });
+              if (entry.hostId === host && items.has(entry.threadId)) metadata.push({ id: entry.threadId, recencyAt: entry.sourceRecencyAt, updatedAt: entry.sourceUpdatedAt });
             }
           }
         } else {
@@ -170,7 +173,8 @@ async function refresh() {
         if (Array.isArray(metadata)) {
           for (const entry of metadata) {
             const key = items.get(entry.id);
-            const time = timestamp(entry.updatedAt);
+            // updatedAt 也会因元数据同步变化；优先显示真实会话活动时间。
+            const time = timestamp(entry.recencyAt) ?? timestamp(entry.updatedAt);
             if (key && time) cache.set(key, time);
           }
         }

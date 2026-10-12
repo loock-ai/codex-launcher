@@ -30,6 +30,10 @@ export function projectNameOf(thread: DisplayRecord) {
 }
 
 function threadTimestamp(thread: DisplayRecord) {
+  // 元数据同步会更新 updatedAt；列表时间与排序优先使用最近一轮活动时间。
+  if (typeof thread.recencyAt === "number" && Number.isFinite(thread.recencyAt) && thread.recencyAt > 0) {
+    return thread.recencyAt;
+  }
   return Number(thread.updatedAt ?? thread.createdAt ?? 0);
 }
 

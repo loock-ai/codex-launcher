@@ -7,7 +7,11 @@ import {fileURLToPath} from 'node:url';
 import {LauncherController} from './controller.js';
 import type {DesktopSettings} from './plugin-contract.js';
 import {systemOpenCommand,clipboardCommand,runPlatformCommand} from './platform.js';
-const CSP="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+function pluginCsp(id:string){
+ // 沙箱 iframe 的自定义协议在 WebKit 中不能仅依赖 'self' 匹配资源。
+ const path=encodeURIComponent(id)+'/',sources=`launcher-plugin://plugin/${path} http://launcher-plugin.localhost/${path}`;
+ return `default-src 'none'; script-src 'self' ${sources}; style-src 'self' ${sources}; img-src 'self' ${sources} data:; font-src 'self' ${sources}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
+}
 const MIME:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.woff':'font/woff','.woff2':'font/woff2'};
 const invalid=()=>Object.assign(Error('无效调用参数'),{code:'INVALID_PARAMS'});
 function id(value:unknown):asserts value is string{if(typeof value!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(value))throw invalid();}
@@ -37,7 +41,7 @@ export async function dispatchSidecar(controller:LauncherController,method:strin
   }
   case 'pluginUiAsset':{
    count(args,2);id(args[0]);if(typeof args[1]!=='string'||!args[1]||args[1].length>4096||args[1].split('/').some(s=>!s||s==='.'||s==='..'||/[\\\0]/.test(s)))throw invalid();
-   const file=await controller.resolvePluginUiAsset(args[0],args[1]);return {body:(await readFile(file)).toString('base64'),mime:MIME[extname(file).toLowerCase()]??'application/octet-stream',csp:CSP};
+   const file=await controller.resolvePluginUiAsset(args[0],args[1]);return {body:(await readFile(file)).toString('base64'),mime:MIME[extname(file).toLowerCase()]??'application/octet-stream',csp:pluginCsp(args[0])};
   }
   default:throw Object.assign(Error('不支持的调用方法'),{code:'METHOD_NOT_FOUND'});
  }

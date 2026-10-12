@@ -566,9 +566,12 @@ describe("移动端对话格式", () => {
   });
 
   it("相对时间使用数字在前、单位在后", () => {
-    expect(relativeTime(100, 220)).toBe("2 分钟");
-    expect(relativeTime(100, 7_300)).toBe("2 小时");
-    expect(relativeTime(100, 172_900)).toBe("2 天");
+    expect(relativeTime(100, 220)).toBe("2m");
+    expect(relativeTime(100, 7_300)).toBe("2h");
+    expect(relativeTime(100, 9_400)).toBe("2h35m");
+    expect(relativeTime(100, 172_900)).toBe("2d");
+    expect(relativeTime(100, 180_280)).toBe("2d");
+    expect(relativeTime(100, 86_500)).toBe("1d");
   });
 
   it("只把协议中的 active 线程标记为进行中", () => {

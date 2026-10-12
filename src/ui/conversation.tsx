@@ -139,9 +139,11 @@ export function removePendingTurn(
 export function relativeTime(timestamp: number, now = Math.floor(Date.now() / 1000)) {
   const elapsed = Math.max(0, Math.floor(now - timestamp));
   if (elapsed < 60) return t("刚刚");
-  if (elapsed < 3600) return t("{count} 分钟", { count: Math.floor(elapsed / 60) });
-  if (elapsed < 86400) return t("{count} 小时", { count: Math.floor(elapsed / 3600) });
-  return t("{count} 天", { count: Math.floor(elapsed / 86400) });
+  const days = Math.floor(elapsed / 86400);
+  if (days) return `${days}d`;
+  const hours = Math.floor(elapsed / 3600) % 24;
+  const minutes = Math.floor(elapsed / 60) % 60;
+  return `${hours ? `${hours}h` : ""}${minutes ? `${hours ? String(minutes).padStart(2, "0") : minutes}m` : ""}`;
 }
 
 export function isThreadRunning(status: unknown) {

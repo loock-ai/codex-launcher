@@ -25,12 +25,24 @@ async function start(manager: any, version = '26.1007.30912', openFactory?: (man
   return { controller, opened };
 }
 afterEach(() => { disposers.splice(0).forEach(fn => fn()); document.body.innerHTML = ''; vi.useRealTimers(); vi.restoreAllMocks(); });
+test('目录同步改变更新时间时，仍显示上午的真实会话活动时间',async()=>{
+ vi.spyOn(Date,'now').mockReturnValue(now*1000);const a=row('local:a');
+ await start({},undefined,undefined,()=>({localThreadCatalog:{readEntries:async()=>[{hostId:'local',threadId:'a',sourceUpdatedAt:now-19*60,sourceRecencyAt:now-6*3600-35*60}]}}));
+ expect(a.querySelector('[data-codex-mobile-time]')?.textContent).toBe('6h35m');
+ expect(a.querySelector('[data-codex-mobile-time]')?.getAttribute('title')).toBe(new Date((now-6*3600-35*60)*1000).toLocaleString());
+});
+test('主机缓存优先使用活动时间，旧版本没有活动时间时保留更新时间回退',async()=>{
+ vi.spyOn(Date,'now').mockReturnValue(now*1000);const a=row('local:a'),b=row('local:b');
+ await start({getCachedThreadMetadata:async()=>[{id:'a',updatedAt:now-60,recencyAt:now-5*3600},{id:'b',updatedAt:now-120}]});
+ expect(a.querySelector('[data-codex-mobile-time]')?.textContent).toBe('5h');
+ expect(b.querySelector('[data-codex-mobile-time]')?.textContent).toBe('2m');
+});
 test('读取原生 local key 和远端 host 缓存，保留标题菜单，缺失时间与非 Codex 行不显示', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(now * 1000);
   const a = row('local:a', 'remote-ssh:mac');
   const b = row('local:b'); row('remote:c', '', 'remote'); row('chatgpt:conversation:d', '', 'chatgpt');
   const { opened } = await start({ getCachedThreadMetadata: async (ids: string[]) => { expect(Array.isArray(ids)).toBe(true); return ids.includes('a') ? [{ id: 'a', updatedAt: now - 120 }] : []; } });
-  expect(a.querySelector('[data-codex-mobile-time]')?.textContent).toBe('2 分钟');
+  expect(a.querySelector('[data-codex-mobile-time]')?.textContent).toBe('2m');
   expect(a.querySelector('[data-codex-mobile-time]')?.getAttribute('title')).toBeTruthy();
   expect(a.querySelector('button')?.textContent).toBe('菜单');
   expect(b.querySelector('[data-codex-mobile-time]')).toBeNull();
@@ -43,7 +55,7 @@ test('虚拟列表复用行时替换时间，关闭后清除标签样式并释�
   await start({ [Symbol.dispose]: () => { disposed = true; }, getCachedThreadMetadata: async (ids: string[]) => ids.map(id => ({ id, updatedAt: now - (id === 'a' ? 10 : 7200) })) });
   expect(a.textContent).toContain('刚刚');
   a.setAttribute('data-app-action-sidebar-thread-id', 'local:b');
-  await vi.waitFor(() => expect(a.textContent).toContain('2 小时'));
+  await vi.waitFor(() => expect(a.textContent).toContain('2h'));
   disposers.splice(0).forEach(fn => fn());
   expect(a.querySelector('[data-codex-mobile-time]')).toBeNull();
   expect(document.querySelector('[data-codex-mobile-time-style]')).toBeNull();
@@ -65,9 +77,9 @@ test('每30秒重新读取已显示会话，并更新分钟与天标签', async 
   const a = row('local:a'); let updatedAt = now - 50;
   await start({ getCachedThreadMetadata: async () => [{ id: 'a', updatedAt }] }, '26.1002.52244');
   expect(a.textContent).toContain('刚刚');
-  updatedAt = now - 86400;
+  updatedAt = now - 86400 - 3600 - 300;
   await vi.advanceTimersByTimeAsync(30100);
-  expect(a.textContent).toContain('1 天');
+  expect(a.textContent).toContain('1d');
 });
 test('取消进行中的读取，代理仅释放一次', async () => {
   row('local:a'); let finish!: (v: any) => void; let released = 0;
@@ -140,10 +152,10 @@ test('正文DOM更新不触发读取，新增与替换侧栏行仍更新时间',
   expect(reads).toBe(baseline);
   const b = row('local:b');
   await vi.advanceTimersByTimeAsync(150);
-  expect(b.textContent).toContain('2 小时');
+  expect(b.textContent).toContain('2h');
   const replacement = row('local:c'); a.replaceWith(replacement);
   await vi.advanceTimersByTimeAsync(150);
-  expect(replacement.textContent).toContain('2 小时');
+  expect(replacement.textContent).toContain('2h');
 });
 test('主机变为不可用时移除已有时间', async () => {
   vi.useFakeTimers(); vi.setSystemTime(now * 1000);
@@ -159,12 +171,12 @@ test('没有appServerManagers时读取原生目录，每批100条且校验主机
  vi.spyOn(Date,'now').mockReturnValue(now*1000);for(let i=0;i<120;i++)row('local:'+i,'ssh:mac');
  const sizes:number[]=[];
  await start({},undefined,undefined,()=>({localThreadCatalog:{readEntries:async(refs:any[])=>{sizes.push(refs.length);return [...refs.map(r=>({...r,sourceUpdatedAt:now-120})),{hostId:'wrong',threadId:'0',sourceUpdatedAt:now}];}}}));
- expect(sizes).toEqual([100,20]);expect(document.querySelectorAll('[data-codex-mobile-time]')).toHaveLength(120);expect(document.querySelector('[data-codex-mobile-time]')?.textContent).toBe('2 分钟');
+ expect(sizes).toEqual([100,20]);expect(document.querySelectorAll('[data-codex-mobile-time]')).toHaveLength(120);expect(document.querySelector('[data-codex-mobile-time]')?.textContent).toBe('2m');
 });
 test('主机管理器不可用时回退到会话目录',async()=>{
  vi.spyOn(Date,'now').mockReturnValue(now*1000);row('local:a');
  await start({},undefined,undefined,()=>({appServerManagers:{open:async()=>({status:'unavailable'})},localThreadCatalog:{readEntries:async()=>[{hostId:'local',threadId:'a',sourceUpdatedAt:now-3600}]}}));
- expect(document.querySelector('[data-codex-mobile-time]')?.textContent).toBe('1 小时');
+ expect(document.querySelector('[data-codex-mobile-time]')?.textContent).toBe('1h');
 });
 test('等待已存在AppHost初始化后读取目录，不重新注册宿主',async()=>{
  vi.useFakeTimers();vi.setSystemTime(now*1000);row('local:a');let available=false;

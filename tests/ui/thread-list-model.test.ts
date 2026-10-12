@@ -12,6 +12,16 @@ const backends = [
 ];
 
 describe("会话列表派生", () => {
+  it("元数据批量同步不改变会话活动时间与排序，旧协议仍回退更新时间", () => {
+    const rows = aggregateThreads(backends.slice(0, 1), {book:[
+      {id:"morning", updatedAt:10000, recencyAt:1000},
+      {id:"afternoon", updatedAt:9000, recencyAt:8000},
+      {id:"legacy", updatedAt:5000, recencyAt:null},
+    ]});
+    expect(rows.map(row=>[row.threadId,row.timestamp])).toEqual([
+      ["afternoon",8000],["legacy",5000],["morning",1000],
+    ]);
+  });
   const items = aggregateThreads(backends, {
     book: [
       {

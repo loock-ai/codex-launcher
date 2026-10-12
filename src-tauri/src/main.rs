@@ -268,7 +268,10 @@ fn main() {
   tauri::async_runtime::spawn(execute_launch(backend, argv));
   },Err(error)=>{eprintln!("{error}");app.manage(StartupError(error));}}
   let open=tauri::menu::MenuItem::with_id(app,"open","打开启动器",true,None::<&str>)?;let quit=tauri::menu::MenuItem::with_id(app,"quit","退出启动器",true,None::<&str>)?;let menu=tauri::menu::Menu::with_items(app,&[&open,&quit])?;
-  let mut tray=tauri::tray::TrayIconBuilder::new().title("⌘");
+  let mut tray=tauri::tray::TrayIconBuilder::new();
+  #[cfg(target_os="macos")]
+  { tray=tray.title("⌘"); }
+  #[cfg(not(target_os="macos"))]
   if let Some(icon)=app.default_window_icon(){tray=tray.icon(icon.clone());}
   tray.tooltip("Codex Launcher").menu(&menu).on_menu_event(|app,event|match event.id.as_ref(){"open"=>show(app),"quit"=>app.exit(0),_=>{}}).build(app)?;
   let window=app.get_webview_window("main").ok_or("主窗口未创建")?;
