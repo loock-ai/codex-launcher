@@ -173,9 +173,21 @@ Dots 的房间、附件和身份处理见 [Dots 适配](docs/dots-adapter.md)。
 - 自动化覆盖受控 Electron 和浏览器链路，真实账户兼容性仍需实际使用确认。
 - 当前访问口令方案适用于可信局域网；跨不可信网络连接应增加 HTTPS 和正式身份认证。
 
+## 独立插件仓库与更新
+
+插件源码统一维护在 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins)，顶层 [plugins.json](https://github.com/loock-ai/codex-launcher-plugins/blob/main/plugins.json) 提供描述、版本、源码 Git 地址、宿主 API 版本、发布包和 SHA-256。
+
+在启动器“插件”页点击 **检查插件更新**，查看本地与远端版本，再点击 **更新插件**。检测到本地代码修改或来源尚未记录时，按钮为 **保留备份并更新**；点击后完整备份现有代码。插件 API 不兼容时，需要先升级 Launcher。
+
+更新仅替换 `~/.codex-launcher/plugins/<id>/`。共享设置、启用和自动启动策略以及 `plugin-data/<id>/` 中的配置和访问口令保留；加载失败会回滚代码。代码备份保存在 `plugin-backups/<id>/`。一个插件更新不重载其他插件。
+
+Mobile 的 Web、业务后台和运行依赖都包含在独立包中，常规升级不再要求更新 Launcher。DesktopService/CDP 共享能力仍由宿主提供，新增宿主 API 才需要升级启动器。
+
+源码构建运行 `npm ci` 会按 `plugins.lock.json` 下载并校验固定版本；缓存支持离线复用。Mobile 兼容源码从固定发布包生成，供既有 Web、Android/npm 构建使用，它们不在 Launcher 仓库内维护第二份。插件开发请在独立插件仓库进行。
+
 ## 统一插件
 
-启动器「插件」页管理配置目录 `plugins/` 中的插件。一个插件包可以提供 `main` 后台、`ui` 配置页面、`desktop` 桌面注入入口；既有 v1 脚本插件继续兼容。页面来自插件自身文件，通过隔离 iframe 与宿主通信。
+启动器「插件」页管理 `~/.codex-launcher/plugins/` 中的插件。一个插件包可以提供 `main` 后台、`ui` 配置页面、`desktop` 桌面注入入口；既有 v1 脚本插件继续兼容。页面来自插件自身文件，通过隔离 iframe 与宿主通信。
 
 - **启用**允许加载插件，关闭时停止并卸载；**自动启动**决定下次打开启动器时是否运行。
 - **启动／停止**管理本次运行，停止不会关闭 ChatGPT，也不改变自动启动设置。

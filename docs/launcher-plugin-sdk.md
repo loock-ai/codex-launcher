@@ -5,7 +5,7 @@
 ## 文件与配置
 
 ```text
-~/Library/Application Support/codex-mobile/
+~/.codex-launcher/
 ├── config.json                    # schemaVersion:2，共享 desktop 配置
 ├── config.json.v1.bak             # 从旧版迁移时保留的原始配置
 ├── plugins.json                   # enabled、autoStart、known
@@ -19,7 +19,7 @@
 
 内置模板仅在目标目录不存在时复制，不覆盖用户修改。修改插件代码后点击「重新加载插件」。已安装模板不会随着启动器升级自动覆盖；更新现有插件时应保留自己的改动，替换对应插件文件后重载。Mobile 的 Web 静态资源放在该插件的 `web/` 目录。
 
-Windows 配置目录位于 `%APPDATA%/codex-mobile/`，插件结构相同；桌面应用路径填写实际 `.exe`。
+Windows 配置目录位于 `%USERPROFILE%/.codex-launcher/`，插件结构相同；桌面应用路径填写实际 `.exe`。
 
 旧配置迁移先备份，再将 Mobile 的端口、口令、监听地址、模式与上游地址保存到独立配置，最后写入共享桌面配置。已存在的 Mobile 配置不覆盖。
 
@@ -131,6 +131,14 @@ window.addEventListener('message', event => {
 
 ## 当前边界
 
-仅面向可信本地插件。进程隔离用于故障回收，不是恶意代码沙箱。`permissions`、`pages`、`actions` 声明目前仅为描述性元数据，不构成逐能力授权；页面入口来自 `entrypoints.ui`，动作来自后台注册。暂不包含插件市场、自动更新、签名校验或依赖管理。开发者应将后台打包为 CommonJS，并明确运行所需依赖。
+仅面向可信本地插件。进程隔离用于故障回收，不是恶意代码沙箱。`permissions`、`pages`、`actions` 声明目前仅为描述性元数据，不构成逐能力授权；页面入口来自 `entrypoints.ui`，动作来自后台注册。已提供官方目录检查更新、用户主动安装、SHA-256 校验、代码备份和失败回滚；暂不包含插件市场、后台自动安装或独立签名认证。开发者应将后台打包为 CommonJS，并明确运行所需依赖。
 
 Windows 正常停止使用 taskkill 回收仍存活的插件进程树；worker 已先行异常退出时，孤儿后代的完整回收仍需 Windows 真机验证和 Job Object 兜底，当前不宣称已覆盖这一边界。
+
+## 独立版本发布
+
+插件源码在 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins) 中维护。顶层目录包含 `id/name/description/version/git/compatibility/release`。Git 信息用于查看源码和追溯；启动器使用预构建 ZIP，不运行远端 git pull 或 npm install。
+
+`main` 必须携带自身运行依赖。Mobile 的发布包已经内联其 Node 依赖、打包 Web，并包含兼容旧构建的源码；后者是构建输入，运行时通过 `ctx` 使用宿主，而不是读取 Launcher 源码。宿主 API 当前版本为 `1`。
+
+更新管理属于启动器主界面能力：`checkPluginUpdates`、`updatePlugin(id,{allowLocalChanges})`。插件后台和配置 iframe 不获授权修改其他插件。配置和启用策略不随 ZIP 更新；本地修改要求明确保留备份后覆盖，回滚不会重放业务写操作。

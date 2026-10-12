@@ -38,7 +38,7 @@
     "dev": "zsh -lc 'source \"${CODEX_MOBILE_ENV_FILE:-$HOME/Library/Application Support/CodexMobileWeb/gateway.env}\" && exec npm exec -- concurrently --kill-others --success first --names gateway,vite \"npm:dev:gateway\" \"npm:dev:web\"'",
     "dev:gateway": "NODE_ENV=development CODEX_MOBILE_SERVE_STATIC=false tsx watch server/index.ts",
     "dev:web": "NODE_ENV=development vite --host 0.0.0.0 --port 5173 --strictPort",
-    "build": "tsc -b && vite build",
+    "build": "npm run plugins:prepare && tsc -b && vite build",
     "build:server": "tsc -p tsconfig.npm.json",
     "build:package": "npm run build && npm run build:server",
     "prepack": "npm run build:package",
@@ -48,18 +48,21 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc -b --pretty false",
     "launcher": "tauri dev",
-    "build:launcher": "npm run build:package && node scripts/build-mobile-plugin.mjs && node scripts/build-launcher.mjs",
+    "build:launcher": "npm run build:package && node scripts/build-launcher.mjs",
     "package:launcher": "tauri build",
     "launcher:electron": "electron launcher/main.cjs",
     "package:electron": "npm run build:launcher && electron-builder --mac --dir",
     "build:tauri": "node scripts/build-tauri.mjs",
     "tauri": "tauri",
-    "package:tauri": "tauri build"
+    "package:tauri": "tauri build",
+    "plugins:prepare": "node --import tsx scripts/fetch-builtin-plugins.mjs",
+    "postinstall": "node -e \"const fs=require('node:fs');if(fs.existsSync('scripts/fetch-builtin-plugins.mjs')){try{require.resolve('tsx')}catch{process.exit(0)}require('node:child_process').execFileSync(process.execPath,['--import','tsx','scripts/fetch-builtin-plugins.mjs'],{stdio:'inherit'})}\""
   },
   "dependencies": {
     "playwright-core": "^1.63.0",
     "qrcode": "^1.5.4",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "yauzl": "^3.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
@@ -89,6 +92,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
     "vitest": "^4.0.13",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "yazl": "^3.3.1"
   }
 }

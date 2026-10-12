@@ -1,8 +1,0 @@
-{
-  "id": "desktop-thread-time",
-  "name": "会话时间",
-  "description": "在桌面会话列表显示最近活动时间",
-  "version": "1.0.3",
-  "entry": "inject.js",
-  "defaultEnabled": true
-}

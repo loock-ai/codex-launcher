@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/loock-ai/codex-launcher-plugins",
+  "plugins": [
+    {
+      "id": "desktop-thread-time",
+      "name": "会话时间",
+      "description": "在桌面会话列表显示最近活动时间",
+      "version": "1.0.3",
+      "git": {
+        "url": "https://github.com/loock-ai/codex-launcher-plugins.git",
+        "path": "plugins/desktop-thread-time",
+        "ref": "desktop-thread-time-v1.0.3",
+        "commit": "a7aeb47bef93632e9d4b22f963656172f5f1da2d"
+      },
+      "compatibility": {
+        "launcherApiVersion": "1",
+        "node": ">=20"
+      },
+      "release": {
+        "url": "https://github.com/loock-ai/codex-launcher-plugins/releases/download/desktop-thread-time-v1.0.3/desktop-thread-time-1.0.3.zip",
+        "sha256": "c0c0c1f44fb25e7bc50afd40e642936b519d7713cea43287e0b792bb46c1ddb2"
+      }
+    },
+    {
+      "id": "mobile",
+      "name": "Mobile",
+      "description": "手机 Web、Dots 与 Desktop 控制网关",
+      "version": "1.1.0",
+      "git": {
+        "url": "https://github.com/loock-ai/codex-launcher-plugins.git",
+        "path": "plugins/mobile",
+        "ref": "mobile-v1.1.0",
+        "commit": "a7aeb47bef93632e9d4b22f963656172f5f1da2d"
+      },
+      "compatibility": {
+        "launcherApiVersion": "1",
+        "node": ">=20"
+      },
+      "release": {
+        "url": "https://github.com/loock-ai/codex-launcher-plugins/releases/download/mobile-v1.1.0/mobile-1.1.0.zip",
+        "sha256": "cc69a0d59a3d0c6cde7b3e690d4fd97535cef33d1cbcda2d42ffe9f99101503e"
+      }
+    }
+  ]
+}

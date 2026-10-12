@@ -75,6 +75,8 @@ fn allowed(method: &str) -> bool {
         method,
         "status"
             | "listPlugins"
+            | "checkPluginUpdates"
+            | "updatePlugin"
             | "setPluginEnabled"
             | "setPluginAutoStart"
             | "startPlugin"

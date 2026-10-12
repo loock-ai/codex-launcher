@@ -21,6 +21,8 @@ async function writeClipboard(text:string){await runPlatformCommand(clipboardCom
 export async function dispatchSidecar(controller:LauncherController,method:string,args:unknown[]):Promise<unknown>{
  switch(method){
   case 'status':count(args,0);return controller.status();
+  case 'checkPluginUpdates':count(args,0);return controller.checkPluginUpdates();
+  case 'updatePlugin':count(args,2);id(args[0]);return controller.updatePlugin(args[0],args[1] as {allowLocalChanges?:boolean});
   case 'listPlugins':count(args,0);return controller.listPlugins();
   case 'start':count(args,0);return controller.start();
   case 'stop':count(args,0);return controller.stop();

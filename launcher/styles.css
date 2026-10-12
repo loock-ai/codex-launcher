@@ -20,3 +20,4 @@ header,nav{margin-bottom:16px}
 .plugin-card .plugin-actions{margin:0;gap:6px}
 .plugin-card .plugin-actions button{flex:none;padding:5px 9px}
 .plugin-frame{height:calc(100vh - 210px);min-height:360px}
+.plugin-updates{display:grid;gap:10px;margin-bottom:16px}.plugin-update{padding:12px;border:1px solid #e2e5e9;border-radius:12px;background:#f7f8fa}.plugin-update p{font-size:12px;color:#57616e;margin:7px 0}.plugin-update a{font-size:12px;margin-left:12px;color:#1665c1}

@@ -32,6 +32,8 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
    if(event.sender!==panel.webContents||event.senderFrame!==panel.webContents.mainFrame)throw new Error('无效控制来源');
    return fn(...args);
   });
+  handle('plugins:check-updates',()=>controller.checkPluginUpdates());
+  handle('plugins:update',(id,options)=>controller.updatePlugin(id,options));
   handle('plugins:list',()=>controller.listPlugins());
   handle('plugins:enable',(id,value)=>controller.setPluginEnabled(id,value));
   handle('plugins:auto-start',(id,value)=>controller.setPluginAutoStart(id,value));

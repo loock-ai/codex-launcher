@@ -56,6 +56,7 @@ describe("npm 全局安装包", () => {
     expect(packageJson.dependencies).toEqual({
       "playwright-core": expect.any(String),
       qrcode: expect.any(String),
+      yauzl: expect.any(String),
       ws: expect.any(String),
     });
   });
