@@ -142,7 +142,7 @@ function publish(root, version, repo, signed) {
   writeFileSync(notesPath,readFileSync(new URL('../docs/desktop-release-notes.md',import.meta.url),'utf8'));
   gh('release','create',tag,...assets,'--repo',repo,'--target',process.env.GITHUB_SHA,'--title',`Codex Launcher ${version}`,'--notes-file',notesPath,'--draft','--latest=false');
   // Read back all uploaded asset sizes before publishing and advancing the channel.
-  const published = JSON.parse(gh('api',`repos/${repo}/releases/tags/${tag}`));
+  const published = JSON.parse(gh('release','view',tag,'--repo',repo,'--json','assets'));
   for (const asset of assets) {
     if (!published.assets.some(a => a.name === basename(asset) && a.size === readFileSync(asset).length)) throw new Error('Release upload verification failed');
   }
