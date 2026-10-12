@@ -85,7 +85,7 @@ export function collectArtifacts(source, output, version, arch, signed, publicKe
   for (const extension of extensions) {
     const matches = all.filter(p => p.endsWith(extension));
     if (matches.length !== 1 || !readFileSync(matches[0]).length) throw new Error(`Expected one nonempty ${extension}`);
-    const name = `CodexDesktop-${version}-${platform}${extension}`;
+    const name = `CodexLauncher-${version}-${platform}${extension}`;
     copyFileSync(matches[0],join(output,name));
     entries[extension] = { name, sha256: digest(join(output,name)) };
   }
@@ -102,14 +102,14 @@ export function generateIndex(root, version, repo, publicKey) {
     if (manifest.version !== version || manifest.arch !== arch || manifest.platform !== platform) throw new Error('Manifest version/architecture mismatch');
     for (const ext of extensions) {
       const item = manifest.entries[ext];
-      if (!item || item.name !== `CodexDesktop-${version}-${platform}${ext}` || digest(join(root,item.name)) !== item.sha256) throw new Error('Artifact hash/name mismatch');
+      if (!item || item.name !== `CodexLauncher-${version}-${platform}${ext}` || digest(join(root,item.name)) !== item.sha256) throw new Error('Artifact hash/name mismatch');
     }
     const archive = manifest.entries[updateExt].name;
     const signature = readFileSync(join(root,manifest.entries[`${updateExt}.sig`].name),'utf8').trim();
     verifyUpdaterSignature(readFileSync(join(root,archive)),signature,publicKey);
     platforms[platform] = { signature, url: `https://github.com/${repo}/releases/download/desktop-v${version}/${archive}` };
   }
-  return { version, notes: `Codex Desktop ${version}`, pub_date: new Date().toISOString(), platforms };
+  return { version, notes: `Codex Launcher ${version}`, pub_date: new Date().toISOString(), platforms };
 }
 const gh = (...args) => execFileSync('gh',args,{encoding:'utf8',stdio:['ignore','pipe','inherit']}).trim();
 function tags(repo) {
@@ -122,7 +122,7 @@ function publish(root, version, repo) {
   const index = generateIndex(root,version,repo,process.env.TAURI_UPDATER_PUBLIC_KEY);
   const tag = `desktop-v${version}`;
   const assets = files(root).filter(p => /\.(dmg|gz|sig|exe)$/.test(p));
-  gh('release','create',tag,...assets,'--repo',repo,'--target',process.env.GITHUB_SHA,'--title',`Codex Desktop ${version}`,'--notes','macOS and Windows desktop build; Apple notarization and Windows code signing are not configured.','--draft','--latest=false');
+  gh('release','create',tag,...assets,'--repo',repo,'--target',process.env.GITHUB_SHA,'--title',`Codex Launcher ${version}`,'--notes','macOS and Windows desktop build; Apple notarization and Windows code signing are not configured.','--draft','--latest=false');
   // Read back all uploaded asset sizes before publishing and advancing the channel.
   const published = JSON.parse(gh('api',`repos/${repo}/releases/tags/${tag}`));
   for (const asset of assets) {

@@ -20,8 +20,8 @@ describe('独立桌面发布' , () => {
     expect(() => resolveVersion('0.1.0', ['desktop-v1.0.0'], '1.0.0')).toThrow();
   });
   it('正式配置需要公钥，使用独立固定频道', () => {
-    expect(() => releaseConfig('0.1.0','loock-ai/codex-mobile','',true)).toThrow();
-    const config = releaseConfig('0.1.0','loock-ai/codex-mobile','public-key',true);
+    expect(() => releaseConfig('0.1.0','loock-ai/codex-launcher','',true)).toThrow();
+    const config = releaseConfig('0.1.0','loock-ai/codex-launcher','public-key',true);
     expect(config.bundle.createUpdaterArtifacts).toBe(true);
     expect(config.plugins.updater.endpoints[0]).toContain('/desktop-updates/latest.json');
   });
@@ -39,16 +39,16 @@ describe('独立桌面发布' , () => {
       }
       collectArtifacts(source, join(root,'out'), '0.1.0', arch, true, publicKey, platform);
     }
-    const index = generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-mobile',publicKey);
+    const index = generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-launcher',publicKey);
     expect(Object.keys(index.platforms)).toEqual(['darwin-aarch64','darwin-x86_64','windows-x86_64']);
     expect(index.platforms['windows-x86_64'].url).toMatch(/windows-x86_64\.exe$/);
     expect(index.platforms['darwin-aarch64'].signature).toBe(signature);
     const winManifest = join(root,'out','manifest-windows-x86_64.json');
     renameSync(winManifest, `${winManifest}.held`);
-    expect(() => generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-mobile',publicKey)).toThrow();
+    expect(() => generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-launcher',publicKey)).toThrow();
     renameSync(`${winManifest}.held`, winManifest);
-    writeFileSync(join(root,'out','CodexDesktop-0.1.0-darwin-aarch64.app.tar.gz'),'tampered');
-    expect(() => generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-mobile',publicKey)).toThrow(/hash/);
+    writeFileSync(join(root,'out','CodexLauncher-0.1.0-darwin-aarch64.app.tar.gz'),'tampered');
+    expect(() => generateIndex(join(root,'out'),'0.1.0','loock-ai/codex-launcher',publicKey)).toThrow(/hash/);
   });
   it('缺失或不匹配的签名不能进入发布资产', () => {
     const root = mkdtempSync(join(tmpdir(),'desktop-missing-'));

@@ -270,14 +270,14 @@ fn main() {
   let open=tauri::menu::MenuItem::with_id(app,"open","打开启动器",true,None::<&str>)?;let quit=tauri::menu::MenuItem::with_id(app,"quit","退出启动器",true,None::<&str>)?;let menu=tauri::menu::Menu::with_items(app,&[&open,&quit])?;
   let mut tray=tauri::tray::TrayIconBuilder::new().title("⌘");
   if let Some(icon)=app.default_window_icon(){tray=tray.icon(icon.clone());}
-  tray.tooltip("Codex 启动器").menu(&menu).on_menu_event(|app,event|match event.id.as_ref(){"open"=>show(app),"quit"=>app.exit(0),_=>{}}).build(app)?;
+  tray.tooltip("Codex Launcher").menu(&menu).on_menu_event(|app,event|match event.id.as_ref(){"open"=>show(app),"quit"=>app.exit(0),_=>{}}).build(app)?;
   let window=app.get_webview_window("main").ok_or("主窗口未创建")?;
   window.center()?;
   show(app.handle());
   Ok(())
  })
  .on_window_event(|window,event|{if let tauri::WindowEvent::CloseRequested{api,..}=event{api.prevent_close();let _=window.hide();}})
- .build(tauri::generate_context!()).expect("无法创建 Codex 启动器");
+ .build(tauri::generate_context!()).expect("无法创建 Codex Launcher");
     app.run(|app, event| {
         if matches!(&event, tauri::RunEvent::Ready) {
             show(app);

@@ -112,8 +112,8 @@ CODEX_MOBILE_SERVE_STATIC=false codex-mobile start
 ## 从源码开发
 
 ```bash
-git clone https://github.com/loock-ai/codex-mobile.git
-cd codex-mobile
+git clone https://github.com/loock-ai/codex-launcher.git
+cd codex-launcher
 npm install
 npm run dev
 ```
@@ -154,7 +154,7 @@ npm run test:e2e
 
 ## 移动端构建
 
-[最新 GitHub Release](https://github.com/loock-ai/codex-mobile/releases/latest) 提供：
+[最新 GitHub Release](https://github.com/loock-ai/codex-launcher/releases/latest) 提供：
 
 - Android APK 及 SHA-256 校验文件；
 - 未签名 iOS IPA 及 SHA-256 校验文件。

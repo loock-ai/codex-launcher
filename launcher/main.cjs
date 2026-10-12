@@ -1,7 +1,7 @@
 const {app,Tray,Menu,BrowserWindow,nativeImage,ipcMain,clipboard,shell,dialog,protocol}=require('electron');
 const path=require('node:path');
 protocol.registerSchemesAsPrivileged([{scheme:'launcher-plugin',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true}}]);
-app.setName('Codex 启动器');
+app.setName('Codex Launcher');
 // 名称调整不迁移用户配置、插件和单实例锁目录。
 app.setPath('userData',path.join(app.getPath('appData'),'codex-mobile'));
 let tray,panel,controller,quitting=false;
@@ -20,7 +20,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   controller=new LauncherController(path.join(app.getPath('userData'),'config.json'),root,{system:{openExternal:url=>shell.openExternal(url),writeClipboard:text=>clipboard.writeText(text)}});
   await controller.initialize();
   protocol.handle('launcher-plugin',require('./plugin-protocol.cjs').createPluginProtocolHandler(controller));
-  tray=new Tray(nativeImage.createEmpty());tray.setTitle('⌘');tray.setToolTip('Codex 启动器 · 未启动');
+  tray=new Tray(nativeImage.createEmpty());tray.setTitle('⌘');tray.setToolTip('Codex Launcher · 未启动');
   panel=new BrowserWindow({width:420,height:660,show:false,frame:false,resizable:false,skipTaskbar:true,alwaysOnTop:true,backgroundColor:'#f6f7f9',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
   const ui=path.join(root,'launcher-ui/index.html');
   panel.webContents.setWindowOpenHandler(()=>({action:'deny'}));
@@ -41,7 +41,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   handle('plugins:open-folder',async()=>{const error=await shell.openPath(controller.pluginDirectory());if(error)throw new Error(error);});
   handle('status',()=>controller.status());handle('desktop:save',settings=>controller.saveDesktopSettings(settings));
   handle('desktop:restart',()=>controller.restartDesktop());handle('desktop:open',()=>controller.openDesktop());handle('desktop:connect',()=>controller.connectDesktop());
-  controller.on('status',status=>{if(!panel.isDestroyed())panel.webContents.send('launcher:changed',status);tray.setToolTip('Codex 启动器 · '+(status.desktop.connected?'桌面已连接':'桌面未连接'));});
+  controller.on('status',status=>{if(!panel.isDestroyed())panel.webContents.send('launcher:changed',status);tray.setToolTip('Codex Launcher · '+(status.desktop.connected?'桌面已连接':'桌面未连接'));});
   tray.on('click',()=>panel.isVisible()?panel.hide():showPanel());
   tray.on('right-click',()=>tray.popUpContextMenu(Menu.buildFromTemplate([{label:'打开启动器',click:showPanel},{label:'打开 ChatGPT',click:()=>controller.openDesktop().catch(showError)},{type:'separator'},{label:'退出启动器',click:()=>app.quit()}])));
   await panel.loadFile(ui);resolveReady();await runCommand(process.argv);
@@ -50,4 +50,4 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
  app.on('before-quit',event=>{if(quitting)return;event.preventDefault();quitting=true;Promise.resolve(controller?.stop()).finally(()=>app.quit());});
 }
 function showPanel(){if(!panel||panel.isDestroyed())return;const b=tray.getBounds();const {screen}=require('electron');const area=screen.getDisplayMatching(b).workArea;panel.setPosition(Math.max(area.x,Math.min(b.x+b.width/2-210,area.x+area.width-420)),Math.max(area.y,b.y+b.height+5));panel.show();panel.focus();}
-function showError(error){dialog.showErrorBox('Codex 启动器',String(error.message||error));}
+function showError(error){dialog.showErrorBox('Codex Launcher',String(error.message||error));}

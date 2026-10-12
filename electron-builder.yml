@@ -1,5 +1,5 @@
 appId: vip.loock.codex-mobile-launcher
-productName: Codex 启动器
+productName: Codex Launcher
 asar: true
 npmRebuild: false
 extraMetadata:

@@ -1,12 +1,12 @@
-# Codex 启动器
+# Codex Launcher
 
-[![Apache-2.0](https://img.shields.io/github/license/loock-ai/codex-mobile)](LICENSE)
+[![Apache-2.0](https://img.shields.io/github/license/loock-ai/codex-launcher)](LICENSE)
 ![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Web-111111)
-[![GitHub Release](https://img.shields.io/github/v/release/loock-ai/codex-mobile)](https://github.com/loock-ai/codex-mobile/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/loock-ai/codex-launcher)](https://github.com/loock-ai/codex-launcher/releases/latest)
 
 **在 Mac 上启动连接，在手机上继续桌面的 Codex 任务。**
 
-Codex 启动器基于 Tauri 2，是一个支持 macOS 与 Windows 的桌面插件宿主，统一管理插件和共享桌面连接。
+Codex Launcher 基于 Tauri 2，是一个支持 macOS 与 Windows 的桌面插件宿主，统一管理插件和共享桌面连接。
 内置 Mobile 插件提供手机可访问的 Web 页面，让你查看项目和会话、收发消息、处理审批，
 也能在任务运行时补充引导，或者进入独立的 Dots 对话。
 
@@ -27,8 +27,8 @@ app-server 模式。
 当前应用包以 Apple Silicon 为主，尚未签名，需从源码构建。
 
 ```bash
-git clone https://github.com/loock-ai/codex-mobile.git
-cd codex-mobile
+git clone https://github.com/loock-ai/codex-launcher.git
+cd codex-launcher
 npm install
 npm run package:launcher
 ```
@@ -36,7 +36,7 @@ npm run package:launcher
 打开生成的应用：
 
 ```bash
-open -n -a "src-tauri/target/release/bundle/macos/Codex 启动器.app" --args --open-web
+open -n -a "src-tauri/target/release/bundle/macos/Codex Launcher.app" --args --open-web
 ```
 
 只运行源码版面板，也可使用：
@@ -103,7 +103,7 @@ node bin/codex-mobile.mjs launcher --open-web
 使用打包应用：
 
 ```bash
-open -n "src-tauri/target/release/bundle/macos/Codex 启动器.app" --args --open-web
+open -n -a "src-tauri/target/release/bundle/macos/Codex Launcher.app" --args --open-web
 ```
 
 普通启动会运行已启用且开启自动启动的插件并显示面板；`--open-web` 调用 Mobile 插件，必要时先启动服务再打开浏览器。Mobile 被禁用时会明确报错。启动器已有实例时会转交命令，

@@ -67,4 +67,4 @@ macOS 中应用已运行时，`open -a` 只会激活现有窗口，不能依赖�
 
 ## 首轮远端构建结果
 
-[运行 38194561468](https://github.com/loock-ai/codex-mobile/actions/runs/38194561468) 基于 `a733b96`，版本 `0.1.0`：类型检查、回归、macOS ARM64、macOS x64、Windows x64构建及后台冒烟全部通过。已下载三个安装包并逐个匹配清单SHA-256。Windows NSIS安装包约5.7MB，Apple Silicon DMG约10.8MB。功能分支发布job按规则跳过。Windows安装UI与真实Desktop对话、正式签名发布和更新安装仍未作为此构建验收的一部分。
+[运行 38194561468](https://github.com/loock-ai/codex-launcher/actions/runs/38194561468) 基于 `a733b96`，版本 `0.1.0`：类型检查、回归、macOS ARM64、macOS x64、Windows x64构建及后台冒烟全部通过。已下载三个安装包并逐个匹配清单SHA-256。Windows NSIS安装包约5.7MB，Apple Silicon DMG约10.8MB。功能分支发布job按规则跳过。Windows安装UI与真实Desktop对话、正式签名发布和更新安装仍未作为此构建验收的一部分。

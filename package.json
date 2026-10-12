@@ -19,11 +19,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loock-ai/codex-mobile.git"
+    "url": "git+https://github.com/loock-ai/codex-launcher.git"
   },
-  "homepage": "https://github.com/loock-ai/codex-mobile#readme",
+  "homepage": "https://github.com/loock-ai/codex-launcher#readme",
   "bugs": {
-    "url": "https://github.com/loock-ai/codex-mobile/issues"
+    "url": "https://github.com/loock-ai/codex-launcher/issues"
   },
   "keywords": [
     "codex",
