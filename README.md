@@ -1,214 +1,125 @@
 # Codex Launcher
 
 [![Apache-2.0](https://img.shields.io/github/license/loock-ai/codex-launcher)](LICENSE)
-![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Web-111111)
-[![GitHub Release](https://img.shields.io/github/v/release/loock-ai/codex-launcher)](https://github.com/loock-ai/codex-launcher/releases/latest)
+![平台](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-111111)
+[安卓构建与下载](https://github.com/loock-ai/codex-launcher-plugins/blob/main/plugins/mobile/app/README.md) · [桌面安装包](https://github.com/loock-ai/codex-launcher/releases) · [插件仓库](https://github.com/loock-ai/codex-launcher-plugins) · [使用指南](docs/desktop-launcher.md) · [架构](docs/launcher-architecture.md) · [插件开发](docs/launcher-plugin-sdk.md)
 
-**在 Mac 上启动连接，在手机上继续桌面的 Codex 任务。**
+**管理桌面插件，在浏览器和手机上继续 Codex 会话。**
 
-Codex Launcher 基于 Tauri 2，是一个支持 macOS 与 Windows 的桌面插件宿主，统一管理插件和共享桌面连接。
-内置 Mobile 插件提供手机可访问的 Web 页面，让你查看项目和会话、收发消息、处理审批，
-也能在任务运行时补充引导，或者进入独立的 Dots 对话。
+Codex Launcher 是基于 **Tauri 2** 的桌面插件宿主，负责窗口、插件生命周期、配置和共享桌面连接。插件可以提供 Node 后台、配置页面和桌面注入脚本，并从独立仓库安装、更新。
 
-默认使用 **CDP 桌面桥接**：手机请求通过 ChatGPT Desktop 的既有服务执行，
-使用桌面的会话和主机连接。启动器同时保留原 Codex Mobile 的托管和外部
-app-server 模式。
+默认提供两个插件：
 
-[快速开始](#快速开始) · [日常操作](#日常操作) · [手机上可以做什么](#手机上可以做什么) ·
-[连接设置](#连接设置) · [工作原理](#工作原理)
+| 插件 | 功能 |
+| --- | --- |
+| **Mobile** | 手机 Web、项目与会话、消息与附件、审批、运行中引导及 Dots |
+| **会话时间** | 在桌面侧边栏显示会话最近活动时间 |
+
+插件源码由 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins) 独立维护。Mobile 的 Web、业务后台和运行依赖随插件包发布，常规升级不要求重新安装 Launcher。安卓客户端仍叫 **Codex Mobile**，其封装、构建与发布也由插件仓库负责，并与 Mobile Web 共用 `plugins/mobile/source/src/` 的 UI。原 npm CLI 仍叫 `codex-mobile`。
 
 > 本项目独立开发，与 OpenAI 官方没有隶属关系。
 
 ## 快速开始
 
-### 1. 下载并安装启动器
+### 1. 安装
 
-从 [GitHub Releases](https://github.com/loock-ai/codex-launcher/releases) 下载 **Codex Launcher** 桌面安装包；桌面版本以 `desktop-v` 开头，安卓包仍叫 **Codex Mobile**。
+从 [Releases](https://github.com/loock-ai/codex-launcher/releases) 选择 `desktop-v` 桌面版本：
 
-| 电脑 | 下载文件 |
+| 电脑 | 安装包 |
 | --- | --- |
 | macOS 13.5+，M 系列芯片 | `CodexLauncher-版本-darwin-aarch64.dmg` |
-| macOS 13.5+，Intel 芯片 | `CodexLauncher-版本-darwin-x86_64.dmg` |
+| macOS 13.5+，Intel | `CodexLauncher-版本-darwin-x86_64.dmg` |
 | Windows 10+，x64 | `CodexLauncher-版本-windows-x86_64.exe` |
 
-先安装 [Node.js 20+](https://nodejs.org/zh-cn/download)，并准备已安装、已登录的 ChatGPT/Codex 桌面端。安装包使用本机 Node，无需 Rust 或源码构建。
+安装 [Node.js 20+](https://nodejs.org/zh-cn/download)，准备已安装、已登录的 ChatGPT/Codex 桌面端。Launcher 使用电脑上的 Node，不内置 Node 运行时；使用安装包不需要 Rust。Windows 需要 WebView2。
 
-macOS 打开 DMG，将 **Codex Launcher.app** 拖到“应用程序”后打开；Windows 运行 EXE 安装器。当前包未配置 Apple 公证或 Windows 代码签名；首次打开若出现系统拦截，按系统的隐私与安全性提示处理。Windows 需要 WebView2。
+macOS 打开 DMG，将 **Codex Launcher.app** 拖到“应用程序”；Windows 运行 EXE 安装器。当前包未配置 Apple 公证或 Windows 代码签名，首次打开可能需要按系统提示允许运行。`SHA256SUMS.txt` 提供安装包校验值。
 
-希望从源码构建时，参见 [桌面构建与更新](#桌面构建与更新)。
+### 2. 配置桌面并打开 Web
 
-### 2. 连接桌面
+1. 打开 Launcher，或单击状态栏／托盘图标。
+2. 在 **桌面** 页核对桌面应用路径和 CDP 端口，默认端口为 `9333`。
+3. 在 **插件** 页打开 **Mobile → 配置**，选择 **CDP 桌面桥接**，点击 **打开 Web**。该动作会按需启动 Mobile 服务。
+4. 手机与电脑连接同一网络，展开二维码扫码，或复制完整连接链接到手机浏览器。
 
-打开启动器窗口，或点击托盘／Mac 菜单栏的 `⌘` 图标。
+若桌面已运行但没有开启 CDP，可点击 **强制重启 ChatGPT**。它直接关闭并重启所配置桌面应用，不弹确认框，先处理好运行中的任务。完整连接链接含访问口令，请勿公开分享。
 
-1. 在 **桌面** 页核对 ChatGPT 应用路径与 CDP 端口并保存。
-2. 在 **插件** 页打开 Mobile 的 **配置**，选择 **CDP 桌面桥接**；在插件连接页点击 **打开 Web** 进入网页。启用且开启自动启动的插件会随启动器运行。
-3. 如果 ChatGPT 已运行但没有开启 CDP，在 **桌面** 页点击 **强制重启 ChatGPT**，重新启动桌面并连接。
-
-**强制重启**直接终止所配置 ChatGPT 安装包的主进程，随后以 CDP 参数启动。
-该操作不弹确认框，运行中的任务、草稿和审批也不会阻拦重启。
-
-### 3. 在手机上打开
-
-手机与电脑连接同一网络，在 Mobile 插件配置页点击 **展开二维码**后扫码，
-或点击 **复制连接链接**，把完整链接发送到手机浏览器。
-
-二维码默认收起，可再次点击收起。完整链接包含访问口令，请使用复制功能，
-不要只输入界面中显示的地址。
-
-手机打开后，选择项目和会话即可继续操作。启动器默认使用：
-
-| 项目 | 默认值 |
+| 默认连接 | 值 |
 | --- | --- |
-| 手机 Web 网关 | `19877` |
-| 本机桌面 CDP | `9333` |
-| 手机访问范围 | 局域网 |
-| ChatGPT 应用 | `/Applications/ChatGPT.app` |
+| Mobile Web 网关 | `19877` |
+| 本机 CDP | `9333`，仅本机监听 |
+| macOS 桌面路径 | `/Applications/ChatGPT.app` |
 
-## 日常操作
+Mobile 另保留托管、外部 app-server 两种模式；这两种模式不保证与桌面实时会话同步，见 [使用指南](docs/desktop-launcher.md)。
 
-| 按钮或页面 | 用途 |
-| --- | --- |
-| 启动并打开 Web | 建立连接后打开网页 |
-| 打开 Web | 已启动时直接打开连接页面 |
-| 展开／收起二维码 | 按需显示手机扫码入口 |
-| 复制连接链接 | 复制包含访问口令的完整链接 |
-| 停止连接 | 关闭启动器自己的网关，保留 ChatGPT 桌面应用 |
-| 强制重启 | 直接强制重启 ChatGPT、开启 CDP 并重新连接 |
-| 打开 ChatGPT | 打开配置的桌面应用 |
-| 插件 | 管理启用、自动启动、手动启停、配置页面和重新加载 |
-| 桌面 | 修改共享 ChatGPT 应用路径与 CDP 端口，打开、连接或强制重启桌面 |
-| Mobile 设置 | 修改连接模式、Web 端口、访问范围和口令；修改前需停止服务 |
-| Mobile 审批 | 查看等待处理的请求，并进入 Web 回答 |
-| 日志 | 宿主页显示桌面与插件诊断；Mobile 页面显示自己的服务日志 |
+## 插件操作
 
-关闭启动器面板后，连接会继续运行。退出启动器会停止它管理的连接服务。
+标题和导航固定在顶部，页面内容可滚动，滚动条隐藏。
 
-### 通过命令打开 Web
+- **启动／停止**是同一个按钮：启动时自动加载插件，停止保留配置，不关闭 ChatGPT。打开配置页可以只加载后台，不启动服务。
+- **随启动器启动**控制下次打开 Launcher 时是否运行；它不是系统开机启动设置。
+- **检查插件更新**只读取版本目录；选择某个插件的安装或更新按钮后，才下载、校验并安装。
+- **重新加载插件**读取本地代码；修改配置目录中的插件文件后可使用此操作。
+- **红色删除图标**停止并删除一个插件，备份代码、保留配置。已删除的内置插件不会在重启时自动装回来。
 
-在源码目录完成构建后：
+关闭面板后已运行的服务继续运行；退出 Launcher 会停止它管理的插件和连接。状态栏／托盘左键直接显示并聚焦窗口，右键保留菜单。
 
-```bash
-node bin/codex-mobile.mjs launcher --open-web
-```
+## 插件仓库与独立更新
 
-使用打包应用：
+在 **插件仓库** 中添加公开 GitHub 仓库地址和分支。仓库顶层需要提供 `plugins.json`，包含插件描述、版本、源码 Git 信息、宿主 API 要求、ZIP 地址和 SHA-256。
 
-```bash
-open -n -a "src-tauri/target/release/bundle/macos/Codex Launcher.app" --args --open-web
-```
+官方仓库首次默认配置，也可以编辑、禁用或删除；重启不会恢复被删除的来源。一个仓库不可用不影响检查其他仓库。禁用或删除仓库不停止已安装插件。
 
-普通启动会运行已启用且开启自动启动的插件并显示面板；`--open-web` 调用 Mobile 插件，必要时先启动服务再打开浏览器。Mobile 被禁用时会明确报错。启动器已有实例时会转交命令，
-不会重复创建网关。
+更新时保留共享设置、插件配置和启动策略。一个插件更新不重载其他插件；加载失败恢复旧代码和策略。本地代码有修改或来源尚未登记时，使用 **保留备份并更新**。已安装插件绑定原来源，同名插件不会跨仓库静默覆盖。
 
-## 手机上可以做什么
+目前支持公开 GitHub 仓库，不支持私有仓库凭据、GitLab 或后台自动安装。详细目录格式和发布流程见 [插件仓库规范](docs/plugin-repositories.md)。
 
-Web 按浏览器 UA 区分桌面与移动设备：桌面常驻左侧会话栏，右侧显示对话；
-手机和平板使用抽屉式侧栏。桌面窗口缩小后仍保持两栏，Dots 也保留侧栏入口。
-
-| 功能 | 说明 |
-| --- | --- |
-| 项目与会话 | 获取所选主机的项目、会话列表和历史记录，长会话分页加载 |
-| 收发消息 | 向桌面会话发送消息，查看回复、推理摘要和工具执行情况 |
-| 运行中引导 | 任务运行时补充要求，继续当前任务，也可携带附件 |
-| 审批与问题 | 处理命令、文件修改、权限请求和用户问题 |
-| 非阻塞提问 | 问题卡片可收起、稍后回答，任务继续执行 |
-| 模型与权限 | 查看并选择桌面提供的模型、思考强度和权限配置 |
-| 图片与文件 | 上传附件、查看消息内容及可用的远程文件 |
-| 远程主机 | 连接测试后选择需要展示的主机，在设备管理中分别开启或隐藏 |
-| 多设备 | 保存多个 Mac 的网关连接，切换或汇总查看会话 |
-| Dots | 独立入口，支持消息历史、文字、图片和文件发送 |
-
-Dots 输入框和消息列表复用普通对话样式，隐藏滚动条但保留滚动。
-每条消息最多 4 个附件，单个不超过 20 MiB，也可以只发送附件。
-上传失败保留草稿；消息投递结果未知时保留核对记录，不自动重发。
-
-| 会话列表 | 对话详情 | 设备设置 |
-| --- | --- | --- |
-| ![会话列表](docs/assets/mobile-reference/remote-thread-list.jpg) | ![对话详情](docs/assets/mobile-reference/conversation-detail.jpg) | ![设备设置](docs/assets/mobile-reference/e2e-mobile-settings-final.png) |
-
-## 连接设置
-
-Mobile 插件提供三种模式：
-
-| 模式 | 适用场景 |
-| --- | --- |
-| CDP 桌面桥接（默认） | 通过 ChatGPT Desktop 的既有连接控制桌面会话 |
-| 原 app-server · 启动本机服务 | 由启动器启动并管理独立 app-server |
-| 原 app-server · 连接已有服务 | 接入已运行的本机 app-server |
-
-原 app-server 模式使用所选 Desktop 安装包内的 CLI，自动根据安装包布局查找，
-不依赖全局 `codex` 路径。独立 app-server 进程不保证与桌面的运行状态同步。
-
-配置、插件及插件数据默认保存在 `~/.codex-launcher/`，首次运行新版会迁移旧的 `codex-mobile` 应用数据目录；目标目录已有内容时不会覆盖。配置文件权限为 `0600`。
-默认不会设置开机启动；CDP 只监听本机，手机通过带访问口令的网关连接。
-
-详细说明见 [桌面启动器指南](docs/desktop-launcher.md)。原 npm CLI、环境变量和
-Android／iOS 构建说明见 [原 app-server 与移动端构建指南](docs/app-server-guide.md)。
-
-## 工作原理
+## 架构与数据
 
 ```mermaid
 flowchart LR
-    L["macOS 菜单栏启动器"] --> G["本机鉴权网关"]
-    P["手机 Web"] -->|HTTP / WebSocket| G
-    G -->|本机 CDP| D["ChatGPT Desktop"]
-    D --> C["既有 Codex 主机连接"]
-    D --> T["既有 Dots HTTP 服务"]
+    UI["Tauri 窗口 / 托盘"] --> HOST["Node 插件宿主"]
+    REPO["插件仓库 / Release ZIP"] --> HOST
+    HOST --> MOBILE["Mobile 后台 + Web"]
+    HOST --> TIME["会话时间注入脚本"]
+    HOST --> DESKTOP["共享 DesktopService / CDP"]
+    PHONE["浏览器 / 手机"] --> MOBILE
+    MOBILE -->|"ctx.host"| DESKTOP
+    TIME -->|"运行时注入"| DESKTOP
+    DESKTOP --> APP["桌面既有服务 / 本机与远程主机"]
 ```
 
-启动器负责配置、进程和连接生命周期。网关通过 CDP 调用桌面已有的
-Electron／AppHost 服务，把手机请求发送到所选本机或远程主机。
-CDP 模式不另起一套 Codex 会话进程，也不建立第二套持久化会话数据库。
+`codex-launcher` 维护宿主、桌面连接和插件管理；`codex-launcher-plugins` 维护插件业务。CDP 模式复用桌面的既有服务，不另建一套 Codex 会话数据库。桌面内部接口随安装包版本变化，插件通过宿主 API 获取共享能力；注入脚本在桌面页面中使用 `context` 管理清理。
 
-程序调用接口见 [桌面程序控制通道](docs/desktop-control-channel.md)，
-Dots 的房间、附件和身份处理见 [Dots 适配](docs/dots-adapter.md)。
+```text
+~/.codex-launcher/
+├── config.json                  # 共享桌面路径、CDP 端口
+├── plugins.json                 # 加载、自启、已知 ID、删除记录
+├── plugin-repositories.json     # 仓库地址、分支、启用状态
+├── plugin-installations.json    # 安装版本、代码哈希、来源绑定
+├── plugins/<id>/                # 已安装插件代码
+├── plugin-data/<id>/config.json # 插件独立配置
+└── plugin-backups/<id>/         # 更新或删除前的代码备份
+```
 
-## 当前边界
+首次使用新版且目标目录不存在时，会整体迁移旧 `codex-mobile` 应用数据目录；目标已存在时不覆盖。`--config-dir` 可指定其他目录。配置文件采用私有权限保存。
 
-- Dots 支持桌面版本 `26.1002.52244` 和 `26.1007.30912`；原生用户问题快照仍绑定 `26.1002.52244`，升级桌面后可能需要更新适配。
-- 普通权限审批尚无完整的快照补读；非阻塞用户问题有单独快照适配。
-- Dots 接收采用前台轮询，暂不支持语音、创建 Dot 和复杂交互审批。
-- 桌面新任务的云端工作位置选择尚未接入。
-- 自动化覆盖受控 Electron 和浏览器链路，真实账户兼容性仍需实际使用确认。
-- 当前访问口令方案适用于可信局域网；跨不可信网络连接应增加 HTTPS 和正式身份认证。
+Mobile 的 Node 依赖内联在 `plugins/mobile/main.cjs`，浏览器依赖在 `plugins/mobile/web/assets/`；Launcher 自身依赖在应用包内。开发依赖由各自仓库的 `package-lock.json` 固定，用户安装插件不执行 `npm install`。
 
-## 独立插件仓库与更新
+## 开发与构建
 
-插件源码统一维护在 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins)，顶层 [plugins.json](https://github.com/loock-ai/codex-launcher-plugins/blob/main/plugins.json) 提供描述、版本、源码 Git 地址、宿主 API 版本、发布包和 SHA-256。
+Launcher 源码构建需要 Node.js 20+、Rust stable；macOS 需要 Xcode Command Line Tools，Windows 需要 Microsoft C++ Build Tools。
 
-在启动器“插件”页，同一工具行提供 **检查插件更新**、**重新加载插件**、**打开插件目录** 和 **插件仓库**。检查只读取目录，不下载插件包；选择具体插件的 **更新插件** 或 **安装插件** 后才下载、校验并安装。检测到本地代码修改或来源尚未记录时，按钮为 **保留备份并更新**；点击后完整备份现有代码。插件 API 不兼容时，需要先升级 Launcher。
+```bash
+git clone https://github.com/loock-ai/codex-launcher.git
+cd codex-launcher
+npm ci
+npm run launcher          # Tauri 开发模式
+# 或生成安装包
+npm run package:tauri
+```
 
-“插件仓库”支持添加、编辑地址与分支、启用／禁用和删除公开 GitHub 仓库；每个仓库顶层提供 `plugins.json`。官方仓库首次默认配置，也可修改或删除，重启不恢复。配置保存在 `~/.codex-launcher/plugin-repositories.json`。一个仓库失效不阻止检查其他仓库，已安装插件从原来源更新。同名未安装插件必须明确选择仓库；已绑定来源的插件不能被其他仓库覆盖。
-
-每张插件卡片提供 **删除插件**。删除会停止目标插件、备份代码并清除安装来源及启用策略，保留 `plugin-data/<id>/` 中的配置；重启不会重新复制已删除的内置插件，其他插件继续运行。
-
-更新仅替换 `~/.codex-launcher/plugins/<id>/`。共享设置、启用和自动启动策略以及 `plugin-data/<id>/` 中的配置和访问口令保留；加载失败会回滚代码。代码备份保存在 `plugin-backups/<id>/`。一个插件更新不重载其他插件。
-
-Mobile 的 Web、业务后台和运行依赖都包含在独立包中，常规升级不再要求更新 Launcher。DesktopService/CDP 共享能力仍由宿主提供，新增宿主 API 才需要升级启动器。
-
-源码构建运行 `npm ci` 会按 `plugins.lock.json` 下载并校验固定版本；缓存支持离线复用。Mobile 兼容源码从固定发布包生成，供既有 Web、Android/npm 构建使用，它们不在 Launcher 仓库内维护第二份。插件开发请在独立插件仓库进行。
-
-## 统一插件
-
-启动器「插件」页管理 `~/.codex-launcher/plugins/` 中的插件。一个插件包可以提供 `main` 后台、`ui` 配置页面、`desktop` 桌面注入入口；既有 v1 脚本插件继续兼容。页面来自插件自身文件，通过隔离 iframe 与宿主通信。
-
-- 卡片只保留一个 **启动／停止** 按钮，启动时自动加载插件；**随启动器启动** 决定下次打开启动器时是否运行。
-- **启动／停止**管理本次运行，停止不会关闭 ChatGPT，也不改变自动启动设置。
-- **重新加载**读取当前配置目录中的插件，不覆盖用户修改。
-- **Mobile**拥有三种连接模式、Web 服务、二维码、访问设置和审批页面；**会话时间**独立为桌面列表显示最近活动时间。二者共享桌面连接，停止 Mobile 不会停止会话时间插件。
-
-宿主 `config.json` 保存桌面路径与 CDP 端口，`plugins.json` 保存启用和启动策略，`plugin-data/<插件ID>/` 保存各插件配置。首次安装复制内置插件；移走 Mobile 包后，宿主仍可管理其他插件和桌面。
-
-插件后台运行在独立子进程，面向可信本地代码，不提供恶意 Node 代码沙箱。后台和页面接口见 [插件 SDK](docs/launcher-plugin-sdk.md)，脚本格式详见 [桌面脚本插件指南](docs/desktop-script-plugins.md)，整体设计见 [统一插件架构](docs/superpowers/specs/2026-10-12-launcher-plugin-runtime-design.md)。
-
-## API 与插件规划
-
-桌面程序内部原生服务、可修改能力及插件封装方向见
-[桌面内部 API 能力参考](docs/desktop-internal-api.md)。
-现有启动器 HTTP／WebSocket 接口另见 [网关 API 参考](docs/plugin-api-reference.md)。已提供统一后台、页面和注入入口；插件市场及恶意第三方代码安全沙箱仍不在当前范围。
-
-## 开发与验证
+`npm ci` 按 `plugins.lock.json` 获取固定版本内置插件，校验 SHA-256，缓存有效时可离线复用。`src/` 和部分 `server/` 是从 Mobile 发布包生成的兼容构建输入，用于旧 Web/npm 兼容流程；Android/iOS 直接在插件仓库构建，不在 Launcher 仓库维护第二份业务源码。修改 Mobile 请到插件仓库，见 [架构与源码归属](docs/launcher-architecture.md)。
 
 ```bash
 npm run typecheck
@@ -216,34 +127,29 @@ npm test
 npm run build:launcher
 ```
 
-启动器、桌面通道和 Dots 的受控浏览器测试：
+源码编译后，用命令启动 Mobile 并打开网页：
 
 ```bash
-RUN_CDP_FIXTURE=1 npx vitest run \
-  tests/server/launcher-panel.integration.test.ts \
-  tests/server/control-interactive.integration.test.ts \
-  tests/server/dots-web.integration.test.ts
+node bin/codex-mobile.mjs launcher --open-web
+# macOS 打包应用
+open -n -a "src-tauri/target/release/bundle/macos/Codex Launcher.app" --args --open-web
 ```
 
-## 许可证
+Electron 仅保留开发回退入口，正式桌面安装包使用 Tauri。Launcher 更新与插件更新独立：宿主更新支持签名下载和安装，未配置更新签名时可从 Release 手动安装新版本，见 [桌面发布](docs/desktop-release.md)。
+
+## 文档导航
+
+| 文档 | 用途 |
+| --- | --- |
+| [使用指南](docs/desktop-launcher.md) | 窗口、连接、插件操作和常见问题 |
+| [Launcher 架构](docs/launcher-architecture.md) | 两个仓库、进程边界、依赖及生成源码 |
+| [插件 SDK](docs/launcher-plugin-sdk.md) | `ctx`、生命周期、页面桥及共享桌面 API |
+| [插件仓库规范](docs/plugin-repositories.md) | 目录格式、版本发布、安装和删除 |
+| [桌面脚本](docs/desktop-script-plugins.md) | `context`、CDP 注入和清理 |
+| [网关 API](docs/plugin-api-reference.md) | Mobile HTTP/WebSocket 契约 |
+| [原 app-server 指南](docs/app-server-guide.md) | npm CLI、环境变量、移动端构建 |
+| [桌面发布](docs/desktop-release.md) | macOS/Windows 构建、更新签名与发布 |
+
+插件能力受桌面适配版本和所选主机影响。当前审批快照、Dots 轮询、云端任务位置选择等边界见各 API 文档；受控测试通过不等于所有真实账户和桌面版本均已验收。
 
 本项目使用 [Apache License 2.0](LICENSE)。
-
-## 桌面构建与更新
-
-桌面版构建目标包含 macOS 13.5+ 的 Apple Silicon、Intel，以及 Windows 10+ x64，使用用户电脑上的 Node.js 20 或以上版本，安装包不再携带 Node 运行时。执行 `npm run package:tauri` 构建 Tauri 应用及 DMG；旧 Electron 构建保留为 `npm run package:electron`。源码调试使用 `npm run launcher`。
-
-启动器「更新」页可检查新版本、查看说明、下载验签和安装重启。开发包未配置公钥时明确显示更新未配置。独立工作流 `build-desktop.yml` 负责三个目标构建及桌面发布，桌面 tags 与更新索引独立于安卓。签名配置、发布顺序和验收边界见 [桌面发布文档](docs/desktop-release.md)。
-
-未配置更新签名时仍会发布安装包，自动更新频道保持原样，可下载新安装包手动更新。
-
-```bash
-git clone https://github.com/loock-ai/codex-launcher.git
-cd codex-launcher
-npm install
-npm run package:tauri
-```
-
-源码构建需要 Node.js、Rust stable；macOS 需要 Xcode Command Line Tools，Windows 需要 Microsoft C++ Build Tools。Windows 安装包使用 NSIS，首次运行需 WebView2；具体构建和验收状态见桌面发布文档。Windows 桌面应用路径填写实际 `.exe` 路径，默认值仅作位置提示。
-
-状态栏／托盘图标左键单击直接显示并聚焦启动器窗口，已打开时不会隐藏；右键保留菜单。

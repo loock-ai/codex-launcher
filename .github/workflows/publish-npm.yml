@@ -1,6 +1,12 @@
 name: Publish npm Package
 
 on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 独立CLI发布版本（与安卓App发布解耦）
+        required: true
+        type: string
   workflow_call:
     inputs:
       app_version:

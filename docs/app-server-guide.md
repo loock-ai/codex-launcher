@@ -1,6 +1,8 @@
 # 原 app-server 与移动端构建指南
 
-桌面同步推荐使用 [菜单栏启动器](../README.md)。本页保留独立 app-server、环境变量、开发与移动端构建说明。
+桌面同步推荐使用 [桌面启动器](../README.md)。本页保留独立 app-server、环境变量、开发与移动端构建说明。
+
+Mobile 的 Web 与业务网关源码现由 [独立插件仓库](https://github.com/loock-ai/codex-launcher-plugins/tree/main/plugins/mobile/source) 维护。Launcher 中的 `src/` 和部分 `server/` 是固定版本发布包生成的兼容输入；开发前执行 `npm ci`，若跳过安装脚本则执行 `npm run plugins:prepare`。不要直接修改生成文件，详见 [源码归属](launcher-architecture.md)。
 
 ### 原 app-server 模式
 
@@ -152,31 +154,10 @@ npm run build
 npm run test:e2e
 ```
 
-## 移动端构建
+## 移动端构建已迁移
 
-[最新 GitHub Release](https://github.com/loock-ai/codex-launcher/releases/latest) 提供：
+Android APK 与可选的未签名 iOS IPA 由 [codex-launcher-plugins](https://github.com/loock-ai/codex-launcher-plugins) 的 Mobile 插件负责。构建说明、图标、客户端版本和封装脚本见 [Mobile App 文档](https://github.com/loock-ai/codex-launcher-plugins/blob/main/plugins/mobile/app/README.md)。Web 与 App 直接复用 `plugins/mobile/source/src/`，Launcher 不再构建移动客户端。
 
-- Android APK 及 SHA-256 校验文件；
-- 未签名 iOS IPA 及 SHA-256 校验文件。
+npm CLI 发布保留在 [publish-npm.yml](../.github/workflows/publish-npm.yml)，支持独立手动发布；它与 App 版本和构建解耦。
 
-Android App 会检查正式 Release，发现新版本后由用户确认下载，校验成功后调起系统
-安装器。首次使用需要在 Android 系统中允许 Codex Mobile 安装未知应用，App 不支持
-静默安装。
-
-iOS IPA 未签名，安装到真实设备或上传 TestFlight 前仍需使用 Apple Developer 证书
-签名。
-
-仓库使用固定提交的 PakePlus Android/iOS 项目作为原生容器，并把当前 `dist/` 静态
-资源内置到 App。构建产物不包含局域网 IP、网关 Token 或其他私人配置。
-
-发布流程：
-
-- `main` 的应用相关代码变化会触发 Android、iOS 构建和 GitHub Release；
-- npm 包只在网关、CLI 或包配置变化时随同发布，也可在手动工作流中显式启用；
-- Android、iOS 与同次发布的 npm 包共用一个解析后的版本号。
-
-相关工作流：
-
-- [build-android.yml](../.github/workflows/build-android.yml)
-- [build-ios.yml](../.github/workflows/build-ios.yml)
-- [publish-npm.yml](../.github/workflows/publish-npm.yml)
+旧安卓客户端的原生更新桥限制旧仓库下载地址；迁移后的首个版本需要从插件仓库下载 APK 手动安装，后续使用新 App 的固定更新索引。包名仍为 `vip.loock.codexmobile`，名称仍为 Codex Mobile。跨版本覆盖安装仍需系统确认签名一致。
