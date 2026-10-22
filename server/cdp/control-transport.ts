@@ -5,16 +5,66 @@ import {ControlError,type ControlTransport,type UserQuestionTarget,type UserQues
 import {DESKTOP_APP_HOST_CONTRACT} from './app-host-contract.js';
 import {readUserQuestionsScript,respondUserQuestionScript} from './user-question-script.js';
 
-export function readDesktopHosts(){
- const bridge=(window as any).electronBridge;
- if(typeof bridge?.getSharedObjectSnapshotValue!=='function')throw new Error('当前桌面不提供远程主机状态');
+/** 自包含，直接在已连接的renderer运行；加载器可注入用于不同桌面模块的回归。 */
+export async function readDesktopHosts(loadModule?: (url:string)=>Promise<Record<string,any>>){
  const hosts=[{hostId:'local',displayName:'本机'}],seen=new Set(['local']);
- for(const key of ['remote_ssh_connections','remote_control_connections','remote_wsl_connections']){
-  const entries=bridge.getSharedObjectSnapshotValue(key);
-  if(!Array.isArray(entries))continue;
-  for(const entry of entries){if(typeof entry?.hostId!=='string'||!entry.hostId||entry.autoConnect===false||seen.has(entry.hostId))continue;seen.add(entry.hostId);hosts.push({hostId:entry.hostId,displayName:typeof entry.displayName==='string'?entry.displayName:entry.hostId});}
+ const append=(entries:unknown)=>{
+  if(!Array.isArray(entries))return;
+  for(const entry of entries){
+   if(!entry||typeof entry.hostId!=='string'||!entry.hostId||entry.autoConnect===false||seen.has(entry.hostId))continue;
+   seen.add(entry.hostId);hosts.push({hostId:entry.hostId,displayName:typeof entry.displayName==='string'?entry.displayName:entry.hostId});
+  }
+ };
+ // 旧版共享对象仍有值时保留原行为，不加载新版模块。
+ const bridge=(window as any).electronBridge;
+ let legacy=false;
+ if(typeof bridge?.getSharedObjectSnapshotValue==='function')for(const key of ['remote_ssh_connections','remote_control_connections','remote_wsl_connections']){
+  const entries=bridge.getSharedObjectSnapshotValue(key);if(Array.isArray(entries)){legacy=true;append(entries);}
  }
- return hosts;
+ if(legacy)return hosts;
+ const importModule=loadModule??((url:string)=>import(/* @vite-ignore */ url));
+ let closed=false,subscription:any,pending:any,timer:ReturnType<typeof setTimeout>|undefined;
+ const dispose=(value:any)=>{try{value?.[Symbol.dispose]?.();}catch{}};
+ const release=async(value:any)=>{
+  let request:any,cleanupTimer:ReturnType<typeof setTimeout>|undefined;
+  try{request=value?.unsubscribe?.();await Promise.race([Promise.resolve(request),new Promise(resolve=>{cleanupTimer=setTimeout(resolve,1000);})]);}
+  catch{/* 连接已关闭也必须释放引用。 */}
+  finally{clearTimeout(cleanupTimer);dispose(request);dispose(value);}
+ };
+ const read=async()=>{
+  const base=new URL(location.href),urls=new Set<string>();
+  const resources=typeof performance.getEntriesByType==='function'?performance.getEntriesByType('resource').map(entry=>entry.name):[];
+  const elements=Array.from(document.querySelectorAll<HTMLScriptElement&HTMLLinkElement>('script[type="module"][src],link[rel="modulepreload"][href]'));
+  for(const raw of [...resources,...elements.map(entry=>entry.src||entry.href)])try{
+   const url=new URL(raw,base);
+   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(new URL('./assets/',base).pathname)&&/\/app-shared-[^/]+\.js$/.test(url.pathname)&&!url.search&&!url.hash)urls.add(url.href);
+  }catch{/* 非桌面共享模块不参与探测。 */}
+  let catalog:any;
+  for(const url of [...urls].slice(0,8)){
+   if(closed)return hosts;
+   let native:Record<string,any>;try{native=await importModule(url);}catch{continue;}
+   for(const value of Object.values(native)){
+    if(!value||typeof value!=='object')continue;
+    try{if(typeof value.remoteConnections?.catalog?.subscribe==='function'){catalog=value.remoteConnections.catalog;break;}}catch{}
+   }
+   if(catalog)break;
+  }
+  if(closed)return hosts;
+  if(!catalog)throw Error('当前桌面未提供可读取的远程主机目录');
+  let accept!:(value:typeof hosts)=>void,reject!:(reason:unknown)=>void,received=false;
+  const snapshot=new Promise<typeof hosts>((resolve,fail)=>{accept=resolve;reject=fail;});
+  // catalog.read是原生实例字段，新版RPC不能访问；订阅会立即推送当前快照。
+  pending=catalog.subscribe((value:any)=>{
+   if(closed||received)return;received=true;
+   if(!value||typeof value!=='object'){reject(Error('远程主机目录结构不可用'));return;}
+   for(const key of ['ssh','wsl','remoteControl'])append(value[key]);accept(hosts);
+  });
+  // 同时等待句柄与快照，避免订阅拒绝时遗留未处理的Promise。
+  const subscribed=Promise.resolve(pending).then(async value=>{if(closed){await release(value);return;}subscription=value;});
+  await Promise.all([subscribed,snapshot]);return hosts;
+ };
+ try{return await Promise.race([read(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('读取远程主机目录超时')),8000);})]);}
+ finally{closed=true;clearTimeout(timer);dispose(pending);if(subscription)await release(subscription);}
 }
 
 /** 安装旁路监听器，不改变原 renderer 的消费/ACK 路径。 */
@@ -103,6 +153,6 @@ export class CdpControlTransport implements ControlTransport {
   if(response.status==='invalid')throw new ControlError('INVALID_PARAMS','回答内容与当前问题不匹配');
   throw new ControlError('ACTION_WRITE_UNKNOWN','回答已提交但结果未确认，请核对桌面，不要重复提交');
  }
- async readHosts(){if(this.stopped||!this.page)throw new Error('桌面传输未连接');return this.page.evaluate(readDesktopHosts);}
+ async readHosts(){if(this.stopped||!this.page)throw new Error('桌面传输未连接');return this.page.evaluate(readDesktopHosts,undefined);}
  async close(){this.stopped=true;clearInterval(this.timer);await this.draining;if(this.page&&!this.page.isClosed())await this.page.evaluate(key=>(window as any)[key]?.dispose(),this.key).catch(()=>{});await this.browser?.close();this.page=null;this.browser=null;this.listeners.clear();}
 }
