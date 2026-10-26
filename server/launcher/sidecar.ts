@@ -68,7 +68,7 @@ export async function runSidecar(argv=process.argv.slice(2)){
  controller.on('status',data=>{send({event:'status',data});diagnostics.schedule();});
  const initialized=controller.initialize();
  const close=()=>shutdown??=(async()=>{
-  closing=true;process.stdin.pause();
+  closing=true;controller.pauseAutomaticRecovery();process.stdin.pause();
   const deadline=setTimeout(()=>{forced=true;console.error('退出宽限期耗尽，强制回收插件进程组；异步清理未完成');controller.forceStop();setTimeout(()=>process.exit(1),100);},10000);
   try{await initialized.catch(()=>{});await chain;await controller.stop();}
   catch(e){console.error(e);process.exitCode=1;}
@@ -90,6 +90,7 @@ export async function runSidecar(argv=process.argv.slice(2)){
    try{count(request.args,0);}catch{const error={message:'无效调用参数',code:'INVALID_PARAMS'};diagnostics.recordError('shutdown',error);send({id:request.id,error});return;}
    void close().then(()=>send(forced?{id:request.id,error:{message:'退出超时，已强制回收插件进程组',code:'SHUTDOWN_FORCED'}}:{id:request.id,result:null}));return;
   }
+  const resumeRecovery=['stop','stopPlugin','setPluginEnabled','saveDesktopSettings','restartDesktop','reloadPlugins','uninstallPlugin'].includes(request.method)?controller.pauseAutomaticRecovery():()=>{};
   chain=chain.then(async()=>{
    try{
     if(closing)throw Object.assign(Error('后台正在退出'),{code:'SHUTTING_DOWN'});
@@ -103,7 +104,7 @@ export async function runSidecar(argv=process.argv.slice(2)){
    }catch(error){
     diagnostics.recordError(request.method,error);const e=error as {message?:string;code?:string};
     send({id:request.id,error:{message:e?.message??String(error),...(typeof e?.code==='string'?{code:e.code}:{})}});
-   }
+   }finally{resumeRecovery();}
   });
  };
  process.stdin.on('data',(chunk:string)=>{if(closing)return;buffer+=chunk;let n;while((n=buffer.indexOf('\n'))>=0){if(n>maxLine){console.error('协议请求过大');void close();return;}const line=buffer.slice(0,n);buffer=buffer.slice(n+1);accept(line);}if(buffer.length>maxLine){console.error('协议请求过大');void close();}});

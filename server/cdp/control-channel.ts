@@ -117,7 +117,7 @@ export class DesktopControlChannel {
 }
 export interface ControlEvent {id?:string|number;hostId?:string;method:string;params:any;channelSessionId:string;sequence:number}
 export class ControlError extends Error {constructor(public code:string,message:string,public details?:unknown){super(message);}}
-export const methods=new Set(['model/list','permissionProfile/list','fs/readFile','fs/createDirectory','fs/writeFile','project/list','project/read','thread/list','thread/read','thread/search','thread/turns/list','thread/items/list','thread/start','thread/resume','turn/start','turn/steer','turn/interrupt']);
+export const methods=new Set(['model/list','permissionProfile/list','fs/readFile','fs/createDirectory','fs/writeFile','project/list','project/read','thread/loaded/list','thread/list','thread/read','thread/search','thread/turns/list','thread/items/list','thread/start','thread/resume','turn/start','turn/steer','turn/interrupt']);
 export interface DesktopHost {hostId:string;displayName:string}
 const writeMethods=new Set(['thread/start','thread/resume','turn/start','turn/steer','turn/interrupt','fs/createDirectory','fs/writeFile']);
 const approvalMethods=new Set(['item/commandExecution/requestApproval','item/fileChange/requestApproval','item/permissions/requestApproval','item/tool/requestUserInput','item/tool/requestOptionPicker','mcpServer/elicitation/request']);

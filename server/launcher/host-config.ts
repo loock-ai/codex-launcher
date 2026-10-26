@@ -11,7 +11,8 @@ export function validateHostConfig(value:HostConfig,platform:NodeJS.Platform=pro
  const desktop=value.desktop;
  if(!desktop||!isDesktopAppPath(desktop.appPath,platform))throw Error(platform==='win32'?'Desktop 应用必须是绝对 .exe 路径':'Desktop 应用必须是绝对 .app 路径');
  if(!Number.isInteger(desktop.cdpPort)||desktop.cdpPort<1||desktop.cdpPort>65535)throw Error('CDP 端口必须是 1 到 65535 的整数');
- return {schemaVersion:2,desktop:{appPath:desktop.appPath,cdpPort:desktop.cdpPort}};
+ const policy:Partial<DesktopSettings>={};for(const key of ['autoReconnect','autoRestart','restartDuringTasks'] as const){if(desktop[key]!==undefined){if(typeof desktop[key]!=='boolean')throw Error('无效桌面恢复设置');policy[key]=desktop[key];}}
+ return {schemaVersion:2,desktop:{appPath:desktop.appPath,cdpPort:desktop.cdpPort,...policy}};
 }
 async function writePrivate(file:string,contents:string,exclusive=false){
  await mkdir(dirname(file),{recursive:true,mode:0o700});

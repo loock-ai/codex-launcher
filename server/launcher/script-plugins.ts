@@ -46,6 +46,7 @@ return cleanupError?{cleanupError}:undefined;
 export class CdpPluginTransport implements PluginTransport {
  private browser:Browser|null=null;private page:Page|null=null;private connecting:Promise<Page>|null=null;private closed=false;private retry:ReturnType<typeof setTimeout>|null=null;
  constructor(private endpoint:string,private refresh:()=>void){validateCdpUrl(endpoint);}
+ private async bounded<T>(work:Promise<T>,ms=12000):Promise<T>{let timer:ReturnType<typeof setTimeout>|undefined;try{return await Promise.race([work,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('桌面插件 CDP 响应超时')),ms);})]);}finally{clearTimeout(timer);}}
  private schedule(){if(this.closed||this.retry)return;this.retry=setTimeout(()=>{this.retry=null;this.refresh();},1500);this.retry.unref?.();}
  private async attach():Promise<Page>{
   if(this.closed)throw Error('插件连接已关闭');
@@ -57,9 +58,9 @@ export class CdpPluginTransport implements PluginTransport {
   page.on('framenavigated',frame=>{if(frame===page.mainFrame())this.schedule();});page.on('close',()=>{this.page=null;this.schedule();});return page;
   })().catch(e=>{this.schedule();throw e;}).finally(()=>{this.connecting=null;});return this.connecting;
  }
- async apply(id:string,source:string,generation:number){const page=await this.attach();const ready=await page.evaluate(()=>document.readyState!=='loading'&&!!(window as unknown as {electronBridge?:unknown}).electronBridge);if(!ready){this.schedule();throw Error('等待桌面 bridge 就绪');}return await page.evaluate<{cleanupError?:string}|undefined>(pluginRuntimeScript(id,source,generation));}
- async dispose(id:string,generation:number){if(this.page&&!this.page.isClosed())await this.page.evaluate(pluginRuntimeScript(id,null,generation));}
- async close(){this.closed=true;if(this.retry)clearTimeout(this.retry);await this.connecting?.catch(()=>{});await this.browser?.close().catch(()=>{});this.page=null;this.browser=null;}
+ async apply(id:string,source:string,generation:number){const page=await this.attach();const ready=await this.bounded(page.evaluate(()=>document.readyState!=='loading'&&!!(window as unknown as {electronBridge?:unknown}).electronBridge),5000);if(!ready){this.schedule();throw Error('等待桌面 bridge 就绪');}return await this.bounded(page.evaluate<{cleanupError?:string}|undefined>(pluginRuntimeScript(id,source,generation)));}
+ async dispose(id:string,generation:number){if(this.page&&!this.page.isClosed())await this.bounded(this.page.evaluate(pluginRuntimeScript(id,null,generation)),3000);}
+ async close(){this.closed=true;if(this.retry)clearTimeout(this.retry);if(this.connecting)await this.bounded(this.connecting,6000).catch(()=>{});if(this.browser)await this.bounded(this.browser.close(),3000).catch(()=>{});this.page=null;this.browser=null;}
 }
 export class ScriptPluginHost {
  readonly directory:string;private stateFile:string;private plugins:ScriptPlugin[]=[];private sources=new Map<string,string>();private enabled=new Set<string>();private useDefaults=false;private endpoint:string|null=null;private transport:PluginTransport|null=null;private generation=Date.now()*1000;private saving:Promise<unknown>=Promise.resolve();private attempts=new Map<string,{generation:number;enabled:boolean}>();private cleanupErrors=new Map<string,string>();private templateErrors:ScriptPlugin[]=[];

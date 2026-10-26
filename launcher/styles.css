@@ -30,3 +30,5 @@ header,nav{margin-bottom:16px}
 .plugin-repositories .repository-row{display:flex;align-items:center;gap:12px}.plugin-repositories .repository-identity{display:grid;flex:1;min-width:0;gap:4px}.plugin-repositories .repository-identity span{min-width:0;overflow-wrap:anywhere}.plugin-repositories .repository-controls{display:flex;align-items:center;flex:none;gap:7px}.plugin-repositories .repository-controls label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}.plugin-repositories .repository-controls input[type=checkbox]{width:auto;margin:0}.repository-form-fields{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:10px}
 
 .plugin-card .plugin-actions .plugin-delete-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:#dc2626;border-color:#fecaca}.plugin-card .plugin-actions .plugin-delete-button:hover:not(:disabled){background:#fef2f2}
+
+.settings label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:8px}.settings input[type=checkbox]{width:17px;height:17px;min-width:17px;padding:0;accent-color:var(--accent)}

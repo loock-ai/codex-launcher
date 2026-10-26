@@ -122,7 +122,7 @@ export function installControlListener(key:string){
 }
 export class CdpControlTransport implements ControlTransport {
  private browser:Browser|null=null;private page:Page|null=null;private key=`__desktopControl_${randomUUID().replaceAll('-','')}`;
- private listeners=new Set<(message:any)=>void>();private timer?:ReturnType<typeof setInterval>;private draining:Promise<void>|null=null;private stopped=false;
+ private listeners=new Set<(message:any)=>void>();private timer?:ReturnType<typeof setInterval>;private draining:Promise<void>|null=null;private stopped=false;private checkingDocument?:Promise<void>;
  constructor(private endpoint:string){validateCdpUrl(endpoint);}
  subscribe(listener:(message:any)=>void){this.listeners.add(listener);return()=>{this.listeners.delete(listener);};}
  private deliver(m:any){for(const listener of this.listeners)listener(m);}
@@ -131,14 +131,17 @@ export class CdpControlTransport implements ControlTransport {
   try{
    const pages=this.browser.contexts().flatMap(c=>c.pages()).filter(p=>/^app:\/\/-\/index\.html(?:\?|$)/.test(p.url())&&!p.url().includes('initialRoute='));
    if(pages.length!==1)throw new Error('无法唯一识别桌面主窗口');
-   this.page=pages[0];await this.page.evaluate(installControlListener,this.key);
-   const lost=()=>this.lose('桌面页面重载或窗口关闭');this.page.on('close',lost);this.page.on('framenavigated',frame=>{if(frame===this.page?.mainFrame())lost();});
+   this.page=pages[0];await this.bounded(this.page.evaluate(installControlListener,this.key));
+   const lost=()=>this.lose('桌面页面重载或窗口关闭');this.page.on('close',lost);this.page.on('framenavigated',frame=>{if(frame===this.page?.mainFrame()&&!this.checkingDocument)this.checkingDocument=this.checkDocument().finally(()=>{this.checkingDocument=undefined;});});
    this.browser.on('disconnected',()=>this.lose('CDP 连接中断'));
    this.timer=setInterval(()=>{if(!this.draining&&!this.stopped){this.draining=this.drain().finally(()=>{this.draining=null;});}},50);this.timer.unref();
   }catch(e){await this.browser.close();this.browser=null;throw e;}
  }
  private lose(reason:string){if(this.stopped)return;this.stopped=true;clearInterval(this.timer);this.deliver({type:'control-lost',reason});}
- private async drain(){try{const messages=await this.page!.evaluate(key=>{const state=(window as any)[key];if(!state)throw new Error('监听器已丢失');return state.queue.splice(0);},this.key);for(const m of messages){if(m.type==='control-lost'){this.lose(m.reason);break;}this.deliver(m);}}catch(error){this.lose(String(error));}}
+ private async bounded<T>(work:Promise<T>,ms=5000):Promise<T>{let timer:ReturnType<typeof setTimeout>|undefined;try{return await Promise.race([work,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('桌面 CDP 响应超时')),ms);})]);}finally{clearTimeout(timer);}}
+ private async checkDocument(){try{if(!this.page||this.stopped)return;const alive=await this.bounded(this.page.evaluate(key=>{const state=(window as any)[key];return Boolean(state&&!state.lost);},this.key));if(!alive)this.lose('桌面页面已重载');}catch(error){this.lose(String(error));}}
+ private async drain(){try{const messages=await this.bounded(this.page!.evaluate(key=>{const state=(window as any)[key];if(!state)throw new Error('监听器已丢失');return state.queue.splice(0);},this.key));if(this.stopped)return;for(const m of messages){if(m.type==='control-lost'){this.lose(m.reason);break;}this.deliver(m);}}catch(error){this.lose(String(error));}}
+
  async send(message:unknown){if(this.stopped||!this.page)throw new Error('桌面传输未连接');await this.page.evaluate(async({key,message})=>{const w=window as any,state=w[key],m=message as any;if(!state||state.lost)throw new Error('监听器不可用');if(m.type==='mcp-request'){for(const [id,expires]of state.requests)if(expires<Date.now())state.requests.delete(id);if(state.requests.size>=2048)throw new Error('等待中的请求过多');state.requests.set(String(m.request.id),Date.now()+120000);}await w.electronBridge.sendMessageFromView(message);},{key:this.key,message});}
  async readUserQuestions(targets:UserQuestionTarget[]):Promise<UserQuestionSnapshot[]>{
   if(this.stopped||!this.page)return [];
@@ -154,5 +157,5 @@ export class CdpControlTransport implements ControlTransport {
   throw new ControlError('ACTION_WRITE_UNKNOWN','回答已提交但结果未确认，请核对桌面，不要重复提交');
  }
  async readHosts(){if(this.stopped||!this.page)throw new Error('桌面传输未连接');return this.page.evaluate(readDesktopHosts,undefined);}
- async close(){this.stopped=true;clearInterval(this.timer);await this.draining;if(this.page&&!this.page.isClosed())await this.page.evaluate(key=>(window as any)[key]?.dispose(),this.key).catch(()=>{});await this.browser?.close();this.page=null;this.browser=null;this.listeners.clear();}
+ async close(){this.stopped=true;clearInterval(this.timer);await this.draining;if(this.page&&!this.page.isClosed())await this.bounded(this.page.evaluate(key=>(window as any)[key]?.dispose(),this.key),1000).catch(()=>{});if(this.browser)await this.bounded(this.browser.close(),3000).catch(()=>{});this.page=null;this.browser=null;this.listeners.clear();}
 }
