@@ -1,14 +1,46 @@
+// 只发现桌面已加载的模块，按能力复用已初始化服务；旧映射仅作兼容提示。
+const resolveDotsRuntimeScript = String.raw`async ({contract,timeoutMs})=>{
+ const resolve=async()=>{
+  const bridge=window.electronBridge,version=bridge?.getSentryInitOptions?.()?.appVersion??bridge?.getAppVersion?.();
+  const hint=[contract,...(contract?.compatibleContracts??[])].find(candidate=>candidate?.version===version);
+  const base=new URL(location.href),urls=new Set();
+  const resources=typeof performance!=='undefined'&&typeof performance.getEntriesByType==='function'?performance.getEntriesByType('resource').map(entry=>entry.name):[];
+  const elements=typeof document!=='undefined'?Array.from(document.querySelectorAll('script[type="module"][src],link[rel="modulepreload"][href]')):[];
+  for(const raw of [...resources,...elements.map(entry=>entry.src||entry.href)])try{
+   const url=new URL(raw,base);
+   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(new URL('./assets/',base).pathname)&&/\/(app-shared|app-initial)-[^/]+\.js$/.test(url.pathname)&&!url.search&&!url.hash)urls.add(url.href);
+  }catch{}
+  const hintUrl=hint?new URL(hint.module,base).href:null;
+  // 仅历史已核对映射可在没有DOM资源记录时回退；未知版本不会导入猜测的资源。
+  if(!urls.size&&hintUrl)urls.add(hintUrl);
+  if(urls.size>16)throw Error('无法唯一识别桌面 Dots 模块');
+  const services=new Set(),apis=new Set();
+  for(const url of urls){
+   let module;try{module=await import(url);}catch{continue;}
+   for(const [key,value] of Object.entries(module)){
+    if(!value||typeof value!=='object')continue;
+    try{
+     if(typeof value.httpFetch?.fetch==='function'&&typeof value.httpFetch?.cancel==='function'&&typeof value.accessInputs?.readAccountInfo==='function')services.add(value);
+     if(typeof value.getRequestTarget==='function'){
+      const known=url===hintUrl&&key===hint.apiExport;
+      const target=value.getRequestTarget('/tbo/primary'),headers=target?.headers;
+      if(known||target?.url==='/tbo/primary'&&headers?.originator==='Codex Desktop'&&headers?.['x-openai-web-frontend']==='codex_webview')apis.add(value);
+     }
+    }catch{}
+   }
+  }
+  if(services.size>1||apis.size>1)throw Error('无法唯一识别桌面 Dots 服务或原生 API');
+  if(!services.size)throw Error('桌面 AppHost HTTP 服务或账号身份服务尚未就绪');
+  if(!apis.size)throw Error('桌面原生 Dots API 尚未就绪');
+  return {services:[...services][0],api:[...apis][0]};
+ };
+ let timer;try{return await Promise.race([resolve(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Dots service discovery timed out')),timeoutMs);})]);}finally{clearTimeout(timer);}
+}`;
+
 // Browser-side scripts remain literal so SSR tooling cannot rewrite dynamic import.
 export const dotsStatusScript = String.raw`async ({contract,timeoutMs})=>{
-    const bridge=window.electronBridge;
-    const version=bridge?.getSentryInitOptions?.()?.appVersion??bridge?.getAppVersion?.();
-    contract=[contract,...(contract.compatibleContracts??[])].find(candidate=>candidate.version===version);
-    if(!contract)return {available:false,error:'此桌面版本尚未验证 Dots 通道（'+(version??'未知')+'）'};
-    const module=await import(new URL(contract.module,location.href).href);
-    const http=module[contract.servicesExport]?.httpFetch;
-    if(!http||typeof http.fetch!=='function'||typeof http.cancel!=='function')return {available:false,error:'桌面 AppHost HTTP 服务尚未就绪'};
-    const access=module[contract.servicesExport]?.accessInputs;
-    if(typeof access?.readAccountInfo!=='function')return {available:false,error:'桌面缺少账号身份服务'};
+    let runtime;try{runtime=await (${resolveDotsRuntimeScript})({contract,timeoutMs});}catch(error){return {available:false,error:error.message};}
+    const access=runtime.services.accessInputs;
     let timer;let snapshot;try{snapshot=await Promise.race([access.readAccountInfo(true),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Dots identity timed out')),timeoutMs);})]);}finally{clearTimeout(timer);}
     const data=snapshot?.data;
     if(snapshot?.status!=='ready'||typeof data?.accountId!=='string'||!data.accountId||typeof data?.userId!=='string'||!data.userId)return {available:false,error:'请先在桌面登录 ChatGPT',code:'DOTS_AUTH_UNAVAILABLE'};
@@ -17,17 +49,13 @@ export const dotsStatusScript = String.raw`async ({contract,timeoutMs})=>{
 }`;
 
 export const dotsRequestScript = String.raw`async ({request,contract,limit,identity,timeoutMs})=>{
-   const bridge=window.electronBridge;
-   const version=bridge?.getSentryInitOptions?.()?.appVersion??bridge?.getAppVersion?.();
-   contract=[contract,...(contract.compatibleContracts??[])].find(candidate=>candidate.version===version);
-   if(!contract)throw new Error('此桌面版本尚未验证 Dots 通道（'+(version??'未知')+'）');
-   const module=await import(new URL(contract.module,location.href).href);
-   const services=module[contract.servicesExport],http=services?.httpFetch;
+   const {services,api}=await (${resolveDotsRuntimeScript})({contract,timeoutMs});
+   const http=services.httpFetch;
    const sameAccount=async()=>{const state=await services.accessInputs.readAccountInfo(true);return state?.status==='ready'&&state.data?.accountId===identity.accountId&&state.data?.userId===identity.userId;};
    const accountChanged={status:409,body:null,accountChanged:true};
    if(!http)throw new Error('Dots AppHost service unavailable');
    const id=crypto.randomUUID();
-   const nativeHeaders=module[contract.apiExport]?.getRequestTarget?.(request.path)?.headers??{};
+   const nativeHeaders=api.getRequestTarget(request.path).headers;
    const headers={...nativeHeaders,
     'Content-Type':'application/json','X-OpenAI-Attach-Auth':'1',
     'ChatGPT-Account-Id':identity.accountId,'X-OpenAI-Expected-Account-Id':identity.accountId,

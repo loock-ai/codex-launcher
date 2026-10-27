@@ -6,7 +6,7 @@ import {chromium,type Browser,type Page} from 'playwright-core';
 import {validateCdpUrl} from '../cdp/dom.js';
 import {DotsError,type DesktopHttpRequest,type DesktopHttpTransport} from './types.js';
 
-// 本构建的已初始化 AppHost services 导出；绝不调用 connect-app-host 再注册 AppView。
+// 历史构建兼容提示；新版按已加载模块能力发现，绝不重新注册 AppView。
 export const DOTS_DESKTOP_CONTRACT={...DESKTOP_APP_HOST_CONTRACT,compatibleContracts:[
  {version:'26.1007.30912',module:'./assets/app-shared-8bd9d0399038.js',servicesExport:'fN',apiExport:'$wt'},
 ]};
