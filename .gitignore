@@ -31,6 +31,7 @@ server/app-server-manager.ts
 server/computer-name.ts
 server/cdp/control-upload.ts
 server/dots/types.ts
+server/dots/voice.ts
 server/dots/http.ts
 server/cdp/control-http.ts
 server/cdp/control-gateway.ts
@@ -97,6 +98,8 @@ src/features/threads/thread-unread.ts
 src/features/dots/dots.css
 src/features/dots/DotsPage.tsx
 src/features/dots/api.ts
+src/features/dots/voice.ts
+src/features/dots/VoiceCallButton.tsx
 src/features/approvals/user-questions.ts
 src/features/approvals/UserQuestionFields.tsx
 src/features/approvals/ApprovalSheet.tsx

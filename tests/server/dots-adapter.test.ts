@@ -14,7 +14,7 @@ const input = {dotId:'dot',text:'你好',requestId:'req-1'};
 describe('DotsAdapter', () => {
   it('reports polling capabilities and closes transport', async()=>{
     const t=new Fixture(), a=new DotsAdapter(t);
-    expect(await a.status()).toEqual({available:true,mode:'polling',capabilities:{messages:true,history:true,attachments:true,approvals:false}});
+    expect(await a.status()).toEqual({available:true,mode:'polling',capabilities:{messages:true,history:true,attachments:true,voice:false,approvals:false}});
     await a.close();expect(t.closed).toBe(true);
   });
   it('lists only orbit profiles and preserves pagination',async()=>{

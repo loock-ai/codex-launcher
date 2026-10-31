@@ -9,6 +9,7 @@ import {DotsError,type DesktopHttpRequest,type DesktopHttpTransport} from './typ
 // 历史构建兼容提示；新版按已加载模块能力发现，绝不重新注册 AppView。
 export const DOTS_DESKTOP_CONTRACT={...DESKTOP_APP_HOST_CONTRACT,compatibleContracts:[
  {version:'26.1007.30912',module:'./assets/app-shared-8bd9d0399038.js',servicesExport:'fN',apiExport:'$wt'},
+ {version:'26.1027.30824',module:'./assets/app-shared-7815d5a1a42a.js',apiModule:'./assets/app-initial-60f141238751.js',apiExport:'_lr'},
 ]};
 const responseLimit=16*1024*1024;
 
@@ -41,16 +42,16 @@ export class CdpDesktopHttpTransport implements DesktopHttpTransport {
    if(this.identity && (state.code==='DOTS_AUTH_UNAVAILABLE'||state.identity&&JSON.stringify(state.identity)!==JSON.stringify(this.identity)))this.accountChanged=true;
    if(this.accountChanged)return {available:false,code:'DOTS_ACCOUNT_CHANGED',error:'桌面账号已变化，请重启启动器后重新连接 Dots'};
    if(state.available&&state.identity)this.identity??=state.identity;
-   return {available:state.available,...state.error?{error:state.error}:{},...state.available&&this.identity?{identityKey:createHash('sha256').update(JSON.stringify(this.identity)).digest('hex')}:{}};
+   return {available:state.available,voiceSignaling:state.available,...state.error?{error:state.error}:{},...state.available&&this.identity?{identityKey:createHash('sha256').update(JSON.stringify(this.identity)).digest('hex')}:{}};
   }catch{return {available:false,error:'无法连接 Dots 桌面服务，请确认桌面与 CDP 已启动'};}
  }
  async request(request:DesktopHttpRequest){
   validateDotsRequest(request);
   const state=await this.status();if(!state.available)throw new DotsError(state.code??'DOTS_UNAVAILABLE',state.error??'Dots 服务不可用',state.code==='DOTS_ACCOUNT_CHANGED'?409:503);
   const page=this.page!;
-  const result=await page.evaluate<{status:number;body:unknown;accountChanged?:boolean}>(`(${dotsRequestScript})(${JSON.stringify({request,contract:DOTS_DESKTOP_CONTRACT,limit:responseLimit,identity:this.identity,timeoutMs:request.method==='POST'?30000:12000})})`);
+   const result=await page.evaluate<{status:number;body:unknown;headers?:Record<string,string>;accountChanged?:boolean}>(`(${dotsRequestScript})(${JSON.stringify({request,contract:DOTS_DESKTOP_CONTRACT,limit:responseLimit,identity:this.identity,timeoutMs:request.method==='POST'?30000:12000})})`);
   if(result.accountChanged){this.accountChanged=true;throw new DotsError('DOTS_ACCOUNT_CHANGED','桌面账号已变化，请重启启动器后重新连接 Dots',409);}
-  return {status:result.status,body:result.body};
+   return {status:result.status,body:result.body,...result.headers?{headers:result.headers}:{}};
  }
  async close(){this.closed=true;await this.connecting?.catch(()=>{});await this.browser?.close().catch(()=>{});this.browser=null;this.page=null;}
 }

@@ -13,6 +13,8 @@ const resolveDotsRuntimeScript = String.raw`async ({contract,timeoutMs})=>{
   const hintUrl=hint?new URL(hint.module,base).href:null;
   // 仅历史已核对映射可在没有DOM资源记录时回退；未知版本不会导入猜测的资源。
   if(!urls.size&&hintUrl)urls.add(hintUrl);
+  // 新版桌面清理了部分资源计时记录；仅使用当前版本已静态和运行时核对的API模块。
+  if(hint?.apiModule)urls.add(new URL(hint.apiModule,base).href);
   if(urls.size>16)throw Error('无法唯一识别桌面 Dots 模块');
   const services=new Set(),apis=new Set();
   for(const url of urls){
@@ -56,13 +58,14 @@ export const dotsRequestScript = String.raw`async ({request,contract,limit,ident
    if(!http)throw new Error('Dots AppHost service unavailable');
    const id=crypto.randomUUID();
    const nativeHeaders=api.getRequestTarget(request.path).headers;
+   const voice=/^\/tbo\/[^/]+\/voice\/calls(?:\/[^/]+\/(?:attach|stop))?$/.test(request.path);
    const headers={...nativeHeaders,
     'Content-Type':'application/json','X-OpenAI-Attach-Auth':'1',
     'ChatGPT-Account-Id':identity.accountId,'X-OpenAI-Expected-Account-Id':identity.accountId,
     'X-OpenAI-Attach-Desktop-Surface':'1','X-OpenAI-Attach-Integrity-State':'1',
     'x-openai-web-frontend':'codex_webview','x-openai-codex-window-type':'electron',
    };
-   if(request.method==='POST')headers['X-OpenAI-Attach-DeviceCheck-Token']='1';
+   if(request.method==='POST'&&!voice)headers['X-OpenAI-Attach-DeviceCheck-Token']='1';
    let requestBody=request.body===undefined?undefined:JSON.stringify(request.body);
    if(request.method==='POST'&&request.path.endsWith('/files')){
     const file=request.body?.file;
@@ -86,14 +89,20 @@ export const dotsRequestScript = String.raw`async ({request,contract,limit,ident
      result=await pending;
      if(finished){result?.[Symbol.dispose]?.();throw new Error('Dots request no longer active');}
      if(!result?.response){
-      const status=result?.responseStatus;
+      // 主机在实际发送前拒绝不适用的设备校验标记，此时确定没有创建通话。
+      const preflightRejected=result?.responseStatus===null&&result?.status===400&&result?.error==='Refusing to attach DeviceCheck token to unexpected URL';
+      const status=result?.responseStatus??(preflightRejected?400:undefined);
       if(Number.isInteger(status)&&status>=400&&status<500&&status!==408&&status!==499)return await sameAccount()?{status,body:{error:'桌面拒绝了 Dots 请求，请检查登录、账户权限或设备验证'}}:accountChanged;
       throw new Error('Dots HTTP transport failed');
      }
      const response=result.response,reader=response.body?.getReader();let size=0,text='';const decoder=new TextDecoder();
      if(reader){try{for(;;){const {done,value}=await reader.read();if(finished)throw new Error('Dots request no longer active');if(done)break;size+=value.byteLength;if(size>limit)throw new Error('Dots response exceeds size limit');text+=decoder.decode(value,{stream:true});}text+=decoder.decode();}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}}
-     let body=null;if(text){try{body=JSON.parse(text);}catch{throw new Error('Dots returned invalid JSON');}}
+     let body=null;if(voice)body=text;else if(text){try{body=JSON.parse(text);}catch{throw new Error('Dots returned invalid JSON');}}
      if(!await sameAccount())return accountChanged;
+     if(voice){
+      const headers={};for(const key of ['location','openai-root-thread-id']){const value=response.headers.get(key);if(value!==null)headers[key]=value;}
+      return {status:response.status,body,headers};
+     }
      return {status:response.status,body};
     })();
     const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Dots request timed out')),timeoutMs);});

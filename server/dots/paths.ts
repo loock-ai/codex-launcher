@@ -8,6 +8,19 @@ export function validateDotsRequest(request:DesktopHttpRequest){
  if(url.origin!=='https://dots.invalid'||url.hash)throw bad();
  // Reject normalized traversal instead of allowing URL parsing to change the target.
  if(url.pathname!==request.path.split('?')[0])throw bad();
+ const voice=/^\/tbo\/([^/]+)\/voice\/calls(?:\/([^/]+)\/(attach|stop))?$/.exec(url.pathname);
+ if(voice){
+  for(const encoded of [voice[1],voice[2]].filter((id):id is string=>!!id)){
+   let id:string;try{id=decodeURIComponent(encoded);}catch{throw bad();}
+   if(!isOpaqueId(id)||encodeURIComponent(id)!==encoded)throw bad();
+  }
+  if(request.method!=='POST'||url.search||voice[2]&&!decodeURIComponent(voice[2]).startsWith('rtc_'))throw bad();
+  const body=request.body as {sdp?:unknown}|undefined;
+  if(!voice[2]){
+   if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>key!=='sdp')||typeof body.sdp!=='string'||!body.sdp.startsWith('v=0')||body.sdp.length>65536)throw bad();
+  }else if(body!==undefined&&(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).length))throw bad();
+  return;
+ }
  const catalog=url.pathname==='/tbo'||url.pathname==='/tbo/primary';
  const match=/^\/messaging\/rooms\/([^/]+)(\/(?:messages|files))?$/.exec(url.pathname);
  if(!catalog&&!match)throw bad();

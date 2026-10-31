@@ -11,12 +11,12 @@ const releasePayload = {
   body: "新版本",
   draft: false,
   prerelease: false,
-  html_url: "https://github.com/loock-ai/codex-mobile/releases/tag/v0.2.1",
+  html_url: "https://github.com/loock-ai/codex-launcher-plugins/releases/tag/v0.2.1",
   assets: [
     {
       name: "CodexMobile-v0.2.1.apk",
       browser_download_url:
-        "https://github.com/loock-ai/codex-mobile/releases/download/v0.2.1/CodexMobile-v0.2.1.apk",
+        "https://github.com/loock-ai/codex-launcher-plugins/releases/download/v0.2.1/CodexMobile-v0.2.1.apk",
       digest:
         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       size: 1_024,

@@ -19,3 +19,12 @@ it('只允许固定接口和编码后的单个房间参数，拒绝地址越界'
  expect(()=>validateDotsRequest({method:'GET',path:'/messaging/rooms/room%3Atest'})).not.toThrow();
  expect(()=>validateDotsRequest({method:'GET',path:'/messaging/rooms/room%3Atest/messages?before=page%3A2'})).not.toThrow();
 });
+it('只允许受限语音创建、关联和挂断，拒绝任意通话路径或参数',()=>{
+ const start={method:'POST' as const,path:'/tbo/dot%3A1/voice/calls',body:{sdp:'v=0\r\n'}};
+ expect(()=>validateDotsRequest(start)).not.toThrow();
+ for(const action of ['attach','stop'])expect(()=>validateDotsRequest({method:'POST',path:`/tbo/dot%3A1/voice/calls/rtc_call-1/${action}`})).not.toThrow();
+ for(const path of ['/tbo/dot/voice/calls?extra=1','/tbo/dot/voice/calls/rtc_a/refresh','/tbo/dot/voice/calls/not-rtc/stop','/tbo/%2e%2e/voice/calls'])expect(()=>validateDotsRequest({...start,path})).toThrow();
+ expect(()=>validateDotsRequest({...start,method:'GET'})).toThrow();
+ expect(()=>validateDotsRequest({...start,body:{sdp:'v=0\r\n',debug_prompt_overrides:{}}})).toThrow();
+ expect(()=>validateDotsRequest({...start,body:{sdp:'invalid'}})).toThrow();
+});

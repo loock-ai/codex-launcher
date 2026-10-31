@@ -25,21 +25,21 @@
     {
       "id": "mobile",
       "name": "Mobile",
-      "description": "手机 Web、Dots 与 Desktop 控制网关",
-      "version": "1.1.0",
+      "description": "支持 Dots 实时语音通话的手机 Web 与 Desktop 控制网关",
+      "version": "1.2.0",
       "git": {
         "url": "https://github.com/loock-ai/codex-launcher-plugins.git",
         "path": "plugins/mobile",
-        "ref": "mobile-v1.1.0",
-        "commit": "a7aeb47bef93632e9d4b22f963656172f5f1da2d"
+        "ref": "mobile-v1.2.0",
+        "commit": "f4fa9f1dc1bfc709f5a55a42dc6641ff0477fb31"
       },
       "compatibility": {
         "launcherApiVersion": "1",
         "node": ">=20"
       },
       "release": {
-        "url": "https://github.com/loock-ai/codex-launcher-plugins/releases/download/mobile-v1.1.0/mobile-1.1.0.zip",
-        "sha256": "cc69a0d59a3d0c6cde7b3e690d4fd97535cef33d1cbcda2d42ffe9f99101503e"
+        "url": "https://github.com/loock-ai/codex-launcher-plugins/releases/download/mobile-v1.2.0/mobile-1.2.0.zip",
+        "sha256": "8fe1283ee389360e641036bee4c8537b0bbc6f567dd4fec6201760e1c8e0bb50"
       }
     }
   ]
