@@ -25,6 +25,7 @@ export class LauncherController extends EventEmitter {
  private installer:PluginInstaller;
  private updateWasRunning=new Map<string,boolean>();
  private recovery=new DesktopRecovery();private recoveryTimer?:ReturnType<typeof setInterval>;private recoveryQueued=false;private recoveryPauses=0;private recoveryEpoch=0;private stopping=false;private recoveryTargets=new Set<string>();
+ private desktopRestartTimer?:ReturnType<typeof setTimeout>;private desktopRestartRequested=false;private desktopRestartEpoch=0;
  private logs:string[]=[];
  private queue:Promise<unknown>=Promise.resolve();
  constructor(private configFile:string,packageRoot:string,private deps:LauncherDependencies={}){
@@ -84,6 +85,20 @@ export class LauncherController extends EventEmitter {
  }
  private async callHost(pluginId:string,method:string,params:unknown){
   const p=params as Record<string,unknown>|undefined;
+  if(method==='desktop.restart'){
+   if(this.stopping)throw Error('启动器正在退出，重启请求已取消');
+   if(p&&Object.keys(p).length)throw Error('重启GPT不接受额外参数');
+   if(!this.desktopRestartRequested){
+    this.desktopRestartRequested=true;
+    const epoch=++this.desktopRestartEpoch;
+    this.desktopRestartTimer=setTimeout(()=>{
+     if(this.stopping||epoch!==this.desktopRestartEpoch)return;
+     this.desktopRestartTimer=undefined;
+     void this.restartDesktop(()=>!this.stopping&&epoch===this.desktopRestartEpoch).catch(error=>this.log('重启GPT失败：'+String(error))).finally(()=>{if(epoch===this.desktopRestartEpoch)this.desktopRestartRequested=false;});
+    },300);
+   }
+   return {accepted:true};
+  }
   if(method==='system.openExternal'){
    if(typeof p?.url!=='string')throw Error('链接无效');const url=new URL(p.url);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('只允许 HTTP 或 HTTPS 链接');
    if(!this.deps.system)throw Error('系统打开链接能力不可用');return await this.deps.system.openExternal(url.href);
@@ -125,15 +140,17 @@ export class LauncherController extends EventEmitter {
  saveDesktopSettings(settings:DesktopSettings){this.recoveryEpoch++;return this.serialize(async()=>{const next=validateHostConfig({schemaVersion:2,desktop:settings});const old=this.config;await this.desktop.updateSettings(next.desktop);try{await saveHostConfig(this.configFile,next);}catch(error){await this.desktop.updateSettings(old.desktop);throw error;}this.config=next;this.log('桌面设置已保存');return this.status();});}
  async openDesktop(){await this.desktop.open();this.changed();return this.status();}
  connectDesktop(){return this.serialize(async()=>{await this.desktop.ensure();await this.plugins.retryWaiting();this.changed();return this.status();});}
- restartDesktop(){const recovering=new Set(this.recoveryTargets);this.cancelRecovery();this.recovery.reset();return this.serialize(async()=>{
+ restartDesktop(shouldContinue?:()=>boolean){const recovering=new Set(this.recoveryTargets);this.cancelRecovery();this.recovery.reset();return this.serialize(async()=>{
+  if(shouldContinue&&!shouldContinue())throw Error('重启请求已取消');
   const running=this.plugins.list().plugins.filter(p=>p.enabled&&(recovering.has(p.id)||['running','waiting'].includes(p.state))).map(p=>p.id);
   for(const id of running)await this.plugins.stop(id);
-  await this.desktop.restart();
+  if(shouldContinue&&!shouldContinue())throw Error('重启请求已取消');
+  await this.desktop.restart(shouldContinue);
   const errors:string[]=[];for(const id of running){try{await this.plugins.start(id);}catch(e){errors.push(id+': '+(e instanceof Error?e.message:String(e)));}}
   this.log(errors.length?'桌面已重启，部分插件恢复失败：'+errors.join('；'):'桌面已重启，插件已恢复');return this.status();
  });}
  start(){this.startRecoveryMonitor();return this.serialize(async()=>{await this.plugins.startAuto();this.changed();return this.status();});}
  /** 仅供宿主退出超时使用，不属于 UI RPC。 */
- forceStop(){this.stopping=true;clearInterval(this.recoveryTimer);this.recoveryTimer=undefined;this.cancelRecovery();this.recovery.reset();this.plugins.forceShutdown();void this.desktop?.shutdown().catch(()=>{});}
- stop(){this.stopping=true;clearInterval(this.recoveryTimer);this.recoveryTimer=undefined;this.cancelRecovery();this.recovery.reset();return this.serialize(async()=>{try{await this.plugins.shutdown();}finally{await this.desktop?.shutdown();this.changed();}return this.desktop?this.status():undefined;});}
+ forceStop(){this.desktopRestartEpoch++;clearTimeout(this.desktopRestartTimer);this.desktopRestartTimer=undefined;this.desktopRestartRequested=false;this.stopping=true;clearInterval(this.recoveryTimer);this.recoveryTimer=undefined;this.cancelRecovery();this.recovery.reset();this.plugins.forceShutdown();void this.desktop?.shutdown().catch(()=>{});}
+ stop(){this.desktopRestartEpoch++;clearTimeout(this.desktopRestartTimer);this.desktopRestartTimer=undefined;this.desktopRestartRequested=false;this.stopping=true;clearInterval(this.recoveryTimer);this.recoveryTimer=undefined;this.cancelRecovery();this.recovery.reset();return this.serialize(async()=>{try{await this.plugins.shutdown();}finally{await this.desktop?.shutdown();this.changed();}return this.desktop?this.status():undefined;});}
 }

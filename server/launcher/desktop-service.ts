@@ -55,7 +55,7 @@ export class DesktopService {
    return {healthy:true,activity:statuses.includes('active')?'busy':statuses.every(s=>s==='idle')?'idle':'unknown',restartable:false};
   }catch{return {healthy:true,activity:'unknown',restartable:false};}
  }
- details(){let cliPath='';try{cliPath=discoverDesktopCli(this.settings.appPath);}catch{}return {...this.settings,cliPath,nativeControlApi:true};}
+ details(){let cliPath='';try{cliPath=discoverDesktopCli(this.settings.appPath);}catch{}return {...this.settings,cliPath,nativeControlApi:true,restartGpt:true};}
  updateSettings(settings:DesktopSettings){if(this.leases.size&&(settings.appPath!==this.settings.appPath||settings.cdpPort!==this.settings.cdpPort))throw Error('请先停止使用桌面的插件');this.settings=settings;this.deps.onChange?.();}
  async open(){if(this.deps.open)return this.deps.open(this.settings);await runPlatformCommand(systemOpenCommand(this.settings.appPath));}
  private async ready(){try{const r=await fetch(this.endpoint()+'/json/version',{signal:AbortSignal.timeout(1200)});return r.ok&&typeof (await r.json()).webSocketDebuggerUrl==='string';}catch{return false;}}
