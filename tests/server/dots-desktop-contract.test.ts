@@ -14,6 +14,10 @@ beforeAll(async()=>{
  root=await mkdtemp(join(tmpdir(),'dots-contract-test-'));
  await mkdir(join(root,'assets'));
  const services=`const services={accessInputs:{readAccountInfo:async()=>({status:'ready',data:{accountId:'test-account',userId:'test-user'}})},httpFetch:{fetch:async(id,request)=>request.url.endsWith('/voice/calls')&&(request.headers['X-OpenAI-Attach-DeviceCheck-Token']==='1'||request.url.includes('/refused/'))?({status:400,responseStatus:null,error:'Refusing to attach DeviceCheck token to unexpected URL'}):({response:request.url.endsWith('/voice/calls')?new Response('v=0\\r\\nanswer',{status:201,headers:{location:'/tbo/dot/voice/calls/rtc_test','OpenAI-Root-Thread-ID':'thread-test','Set-Cookie':'must-not-return'}}):new Response(JSON.stringify({path:request.url,nativeHeader:request.headers['X-Test-Native']}))}),cancel:async()=>{}}};const api={getRequestTarget:()=>({headers:{'X-Test-Native':'present'}})};`;
+ await writeFile(join(root,'assets/123456.abcdef0123.js'),services+
+  'const nativeApi=new class {getRequestTarget(path){return {url:path,headers:{originator:"Codex Desktop","x-openai-web-frontend":"codex_webview","X-Test-Native":"present"}}}};'+
+  'const appHost=new Proxy({},{get(){throw Error("不得探测泛型AppHost代理")}});'+
+  'export const __webpack_require__=Object.assign(()=>{throw Error("不得执行模块工厂")},{c:{services:{exports:{appHost,appServices:services,setAppServices(){}}},api:{exports:{renamed:nativeApi}}}});');
  await writeFile(join(root,'assets/app-shared-6c00c2afcf84.js'),services+'export {services as aj,api as rSt};');
  await writeFile(join(root,'assets/app-shared-8bd9d0399038.js'),services+'export {services as fN,api as $wt};');
  await writeFile(join(root,'assets/app-shared-current.js'),services+'export {services as changedServices};');
@@ -33,10 +37,11 @@ it('语音创建保留原始 SDP 和指定响应头，不泄漏其他响应头',
 });
 afterAll(async()=>{await rm(root,{recursive:true,force:true});});
 
-async function run(script:string,version:string,args:Record<string,unknown>={},resources:string[]=[]){
+async function run(script:string,version:string,args:Record<string,unknown>={},resources:string[]=[],entries:string[]=[]){
  const location={href:pathToFileURL(join(root,'index.html')).href};
  const resourceUrls=resources.map(file=>pathToFileURL(join(root,'assets',file)).href);
- const source=`const performance={getEntriesByType:()=>${JSON.stringify(resourceUrls)}.map(name=>({name}))};const document={querySelectorAll:()=>[]};const window={electronBridge:{getSentryInitOptions:()=>({appVersion:${JSON.stringify(version)}})}};const location=${JSON.stringify(location)};console.log(JSON.stringify(await (${script})(${JSON.stringify({contract:DOTS_DESKTOP_CONTRACT,timeoutMs:1000,...args})})));`;
+ const entryUrls=entries.map(file=>pathToFileURL(join(root,'assets',file)).href);
+ const source=`const performance={getEntriesByType:()=>${JSON.stringify(resourceUrls)}.map(name=>({name}))};const document={querySelectorAll:selector=>selector.startsWith('script')?${JSON.stringify(entryUrls)}.map(src=>({src})):[]};const window={electronBridge:{getSentryInitOptions:()=>({appVersion:${JSON.stringify(version)}})}};const location=${JSON.stringify(location)};console.log(JSON.stringify(await (${script})(${JSON.stringify({contract:DOTS_DESKTOP_CONTRACT,timeoutMs:1000,...args})})));`;
  const {stdout}=await promisify(execFile)(process.execPath,['--input-type=module','-e',source]);
  return JSON.parse(stdout);
 }
@@ -64,4 +69,10 @@ it.each([['app-shared-ambiguous.js','app-initial-current.js'],['app-shared-curre
 
 it('原生请求发送前明确拒绝设备校验标记时返回拒绝状态，不误报投递未知',async()=>{
  await expect(run(dotsRequestScript,'26.1007.30912',{request:{method:'POST',path:'/tbo/refused/voice/calls',body:{sdp:'v=0\r\noffer'}},limit:1024,identity:{accountId:'test-account',userId:'test-user'}})).resolves.toMatchObject({status:400});
+});
+
+it('Rspack桌面从已执行缓存发现身份服务和原生API，不探测泛型AppHost代理',async()=>{
+ const entries=['123456.abcdef0123.js'];
+ await expect(run(dotsStatusScript,'26.1029.61003',{},[],entries)).resolves.toMatchObject({available:true});
+ await expect(run(dotsRequestScript,'26.1029.61003',{request:{method:'GET',path:'/tbo/primary'},limit:1024,identity:{accountId:'test-account',userId:'test-user'}},[],entries)).resolves.toMatchObject({status:200,body:{path:'/tbo/primary',nativeHeader:'present'}});
 });

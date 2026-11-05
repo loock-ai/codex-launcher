@@ -5,10 +5,11 @@ const resolveDotsRuntimeScript = String.raw`async ({contract,timeoutMs})=>{
   const hint=[contract,...(contract?.compatibleContracts??[])].find(candidate=>candidate?.version===version);
   const base=new URL(location.href),urls=new Set();
   const resources=typeof performance!=='undefined'&&typeof performance.getEntriesByType==='function'?performance.getEntriesByType('resource').map(entry=>entry.name):[];
-  const elements=typeof document!=='undefined'?Array.from(document.querySelectorAll('script[type="module"][src],link[rel="modulepreload"][href]')):[];
-  for(const raw of [...resources,...elements.map(entry=>entry.src||entry.href)])try{
+  const entries=typeof document!=='undefined'?Array.from(document.querySelectorAll('script[type="module"][src]'),entry=>entry.src):[];
+  const preloads=typeof document!=='undefined'?Array.from(document.querySelectorAll('link[rel="modulepreload"][href]'),entry=>entry.href):[];
+  for(const raw of [...resources,...entries,...preloads])try{
    const url=new URL(raw,base);
-   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(new URL('./assets/',base).pathname)&&/\/(app-shared|app-initial)-[^/]+\.js$/.test(url.pathname)&&!url.search&&!url.hash)urls.add(url.href);
+   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(new URL('./assets/',base).pathname)&&(/\/(app-shared|app-initial)-[^/]+\.js$/.test(url.pathname)||entries.includes(raw)&&/^\d+\.[a-f0-9]+\.js$/.test(url.pathname.split('/').pop()))&&!url.search&&!url.hash)urls.add(url.href);
   }catch{}
   const hintUrl=hint?new URL(hint.module,base).href:null;
   // 仅历史已核对映射可在没有DOM资源记录时回退；未知版本不会导入猜测的资源。
@@ -17,18 +18,31 @@ const resolveDotsRuntimeScript = String.raw`async ({contract,timeoutMs})=>{
   if(hint?.apiModule)urls.add(new URL(hint.apiModule,base).href);
   if(urls.size>16)throw Error('无法唯一识别桌面 Dots 模块');
   const services=new Set(),apis=new Set();
+  const inspectServices=value=>{
+   try{if(value&&typeof value.httpFetch?.fetch==='function'&&typeof value.httpFetch?.cancel==='function'&&typeof value.accessInputs?.readAccountInfo==='function')services.add(value);}catch{}
+  };
+  const inspectApi=(value,known=false)=>{
+   if(!value||typeof value!=='object')return;
+   try{
+    // 泛型RPC代理会为任意属性生成函数，不能据此调用其未知方法。
+    const descriptor=Object.getOwnPropertyDescriptor(value,'getRequestTarget')??Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value)??{},'getRequestTarget');
+    if(!known&&typeof descriptor?.value!=='function')return;
+    if(typeof value.getRequestTarget!=='function')return;
+    const target=value.getRequestTarget('/tbo/primary'),headers=target?.headers;
+    if(known||target?.url==='/tbo/primary'&&headers?.originator==='Codex Desktop'&&headers?.['x-openai-web-frontend']==='codex_webview')apis.add(value);
+   }catch{}
+  };
   for(const url of urls){
    let module;try{module=await import(url);}catch{continue;}
    for(const [key,value] of Object.entries(module)){
     if(!value||typeof value!=='object')continue;
-    try{
-     if(typeof value.httpFetch?.fetch==='function'&&typeof value.httpFetch?.cancel==='function'&&typeof value.accessInputs?.readAccountInfo==='function')services.add(value);
-     if(typeof value.getRequestTarget==='function'){
-      const known=url===hintUrl&&key===hint.apiExport;
-      const target=value.getRequestTarget('/tbo/primary'),headers=target?.headers;
-      if(known||target?.url==='/tbo/primary'&&headers?.originator==='Codex Desktop'&&headers?.['x-openai-web-frontend']==='codex_webview')apis.add(value);
-     }
-    }catch{}
+    inspectServices(value);inspectApi(value,url===hintUrl&&key===hint?.apiExport);
+   }
+   // Rspack入口只读取已经执行的模块缓存，不执行其他模块工厂。
+   for(const record of Object.values(module.__webpack_require__?.c??{})){
+    const exported=record?.exports;
+    if(Object.hasOwn(exported??{},'setAppServices'))inspectServices(exported.appServices);
+    try{for(const value of Object.values(exported??{}))inspectApi(value);}catch{}
    }
   }
   if(services.size>1||apis.size>1)throw Error('无法唯一识别桌面 Dots 服务或原生 API');

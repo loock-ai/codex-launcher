@@ -28,3 +28,22 @@ it('不导入异源或非共享模块，接口缺失应报错而不是假装只�
  document.head.innerHTML='<link rel="modulepreload" href="https://other.invalid/assets/app-shared-bad.js"><link rel="modulepreload" href="/assets/unrelated.js">';
  const loader=vi.fn();await expect(readDesktopHosts(loader)).rejects.toThrow('远程主机');expect(loader).not.toHaveBeenCalled();
 });
+it('从 Rspack 入口的已加载缓存读取远程主机目录',async()=>{
+ const entry=document.createElement('script');
+ entry.type='module';
+ entry.src='/assets/123456.abcdef0123.js';
+ document.head.append(entry);
+ const unsubscribe=vi.fn();
+ const subscribe=vi.fn(async(callback:(snapshot:unknown)=>void)=>{
+  callback({ssh:[{hostId:'ssh:mini',displayName:'Mac mini'}]});
+  return {unsubscribe};
+ });
+ const runtime=Object.assign(vi.fn(),{c:{host:{exports:{
+  setAppServices(){},
+  appServices:{remoteConnections:{catalog:{subscribe}}}
+ }}}});
+ const loader=vi.fn(async()=>({__webpack_require__:runtime}));
+ expect(await readDesktopHosts(loader)).toEqual([{hostId:'local',displayName:'本机'},{hostId:'ssh:mini',displayName:'Mac mini'}]);
+ expect(runtime).not.toHaveBeenCalled();
+ expect(unsubscribe).toHaveBeenCalledOnce();
+});

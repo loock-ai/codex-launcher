@@ -34,18 +34,30 @@ export async function readDesktopHosts(loadModule?: (url:string)=>Promise<Record
  const read=async()=>{
   const base=new URL(location.href),urls=new Set<string>();
   const resources=typeof performance.getEntriesByType==='function'?performance.getEntriesByType('resource').map(entry=>entry.name):[];
-  const elements=Array.from(document.querySelectorAll<HTMLScriptElement&HTMLLinkElement>('script[type="module"][src],link[rel="modulepreload"][href]'));
-  for(const raw of [...resources,...elements.map(entry=>entry.src||entry.href)])try{
+  const entries=Array.from(document.querySelectorAll<HTMLScriptElement>('script[type="module"][src]'),entry=>entry.src);
+  const preloads=Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="modulepreload"][href]'),entry=>entry.href);
+  for(const raw of [...resources,...entries,...preloads])try{
    const url=new URL(raw,base);
-   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(new URL('./assets/',base).pathname)&&/\/app-shared-[^/]+\.js$/.test(url.pathname)&&!url.search&&!url.hash)urls.add(url.href);
-  }catch{/* 非桌面共享模块不参与探测。 */}
+   const assets=new URL('./assets/',base).pathname;
+   const isShared=/\/app-shared-[^/]+\.js$/.test(url.pathname);
+   const isEntry=entries.includes(raw)&&/^\d+\.[a-f0-9]+\.js$/.test(url.pathname.slice(assets.length));
+   if(url.protocol===base.protocol&&url.host===base.host&&url.pathname.startsWith(assets)&&(isShared||isEntry)&&!url.search&&!url.hash)urls.add(url.href);
+  }catch{/* 忽略无效资源地址。 */}
+  const findCatalog=(services:any)=>{
+   try{const catalog=services?.remoteConnections?.catalog;return typeof catalog?.subscribe==='function'?catalog:undefined;}catch{return undefined;}
+  };
   let catalog:any;
   for(const url of [...urls].slice(0,8)){
    if(closed)return hosts;
    let native:Record<string,any>;try{native=await importModule(url);}catch{continue;}
-   for(const value of Object.values(native)){
-    if(!value||typeof value!=='object')continue;
-    try{if(typeof value.remoteConnections?.catalog?.subscribe==='function'){catalog=value.remoteConnections.catalog;break;}}catch{}
+   catalog=Object.values(native).map(findCatalog).find(Boolean);
+   if(catalog)break;
+   // 只检查 Rspack 已执行的模块缓存，避免运行其他模块。
+   for(const record of Object.values(native.__webpack_require__?.c??{}) as {exports?:any}[]){
+    const exports=record?.exports;
+    if(!Object.hasOwn(exports??{},'setAppServices'))continue;
+    catalog=findCatalog(exports.appServices);
+    if(catalog)break;
    }
    if(catalog)break;
   }
