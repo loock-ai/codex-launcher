@@ -7,5 +7,5 @@ it('单个运行按钮自动加载未启用插件，再切换为停止按钮',as
 });
 it('未运行插件可以先加载并配置，不启动服务',async()=>{
  const calls:string[]=[];const plugin:any={id:'demo',name:'示例',version:'1.0.0',description:'',path:'/plugins/demo',enabled:false,autoStart:false,state:'inactive',hasUi:true};const snapshot=()=>({directory:'/plugins',plugins:[{...plugin}]});const api:any={getStatus:async()=>({desktop:{appPath:'/Applications/ChatGPT.app',cdpPort:9333,connected:false,consumers:0,error:''},logs:[]}),listPlugins:async()=>snapshot(),subscribe:()=>()=>{},pluginUiUrl:async()=>'about:blank',setPluginEnabled:async()=>{calls.push('load');plugin.enabled=true;plugin.state='stopped';return snapshot()},startPlugin:async()=>{calls.push('start');return snapshot()}};
- render(<LauncherPanel api={api}/>);fireEvent.click(await screen.findByRole('button',{name:'配置 示例'}));await screen.findByRole('button',{name:'返回插件列表'});expect(calls).toEqual(['load']);
+ render(<LauncherPanel api={api}/>);fireEvent.click(await screen.findByRole('button',{name:'配置 示例'}));const back=await screen.findByRole('button',{name:'返回插件列表'});expect(back.textContent).toBe('');expect(back.querySelector('svg')).not.toBeNull();expect(back.closest('header')?.querySelector('h2')?.textContent).toBe('示例');expect(calls).toEqual(['load']);
 });

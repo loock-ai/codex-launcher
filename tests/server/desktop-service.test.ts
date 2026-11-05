@@ -37,3 +37,27 @@ it('自动启动中的二次acquire在取消后不能分配连接或租约',asyn
  const pending=service.withRecoveryGuard('a',()=>current,()=>service.call('a','desktop.acquire'));
  await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));current=false;finish();await expect(pending).rejects.toMatchObject({code:'RECOVERY_CANCELLED'});expect(create).not.toHaveBeenCalled();expect(service.status().consumers).toBe(0);
 });
+it('本机原生API租约与已有CDP连接并行，各自请求和释放互不替换',async()=>{
+ const cdp=fixture().channel,native=fixture().channel;
+ const service=new DesktopService({appPath:'/fixture/ChatGPT.app',cdpPort:9333},{ensure:async()=>{},createChannel:()=>cdp as any,createNativeChannel:()=>native as any});
+ const original=await service.call('original','desktop.acquire') as any;
+ const added=await service.call('new','desktop.native.acquire') as any;
+ await service.call('new','desktop.control.request',{leaseId:added.leaseId,hostId:'local',method:'thread/list',params:{}});
+ expect(native.request).toHaveBeenCalledOnce();expect(cdp.request).not.toHaveBeenCalled();
+ await service.call('new','desktop.release',{leaseId:added.leaseId});
+ expect(native.close).toHaveBeenCalledOnce();expect(cdp.close).not.toHaveBeenCalled();
+ await service.call('original','desktop.control.request',{leaseId:original.leaseId,hostId:'local',method:'thread/list',params:{}});
+ expect(cdp.request).toHaveBeenCalledOnce();
+ await service.shutdown();
+});
+it('原生最后租约释放失败仍清理Dots并回读正确消费者状态',async()=>{
+ const native=fixture().channel;
+ native.close.mockRejectedValueOnce(Error('native close failed'));
+ const dots={status:async()=>({available:true}),request:async()=>({}),close:vi.fn(async()=>{})};
+ const service=new DesktopService({appPath:'/fixture/ChatGPT.app',cdpPort:9333},{ensure:async()=>{},createNativeChannel:()=>native as any,createDots:()=>dots as any});
+ const lease=await service.call('native','desktop.native.acquire') as any;
+ await service.call('native','desktop.dots.status',{leaseId:lease.leaseId});
+ await expect(service.call('native','desktop.release',{leaseId:lease.leaseId})).rejects.toThrow('native close failed');
+ expect(dots.close).toHaveBeenCalledOnce();
+ expect(service.status().consumers).toBe(0);
+});

@@ -32,3 +32,5 @@ header,nav{margin-bottom:16px}
 .plugin-card .plugin-actions .plugin-delete-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:#dc2626;border-color:#fecaca}.plugin-card .plugin-actions .plugin-delete-button:hover:not(:disabled){background:#fef2f2}
 
 .settings label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:8px}.settings input[type=checkbox]{width:17px;height:17px;min-width:17px;padding:0;accent-color:var(--accent)}
+
+.plugin-page-header{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;align-items:center;gap:8px;margin-bottom:8px}.plugin-page-header h2{text-align:center;margin:0;font-size:15px}.plugin-back{display:grid;place-items:center;width:30px;height:30px;padding:0}
