@@ -10,6 +10,7 @@ process.on('message',async message=>{
  try{let result;
  switch(message.method){
  case 'activate':{const ctx={pluginDir:message.params.pluginDir,dataDir:message.params.dataDir,signal:controller.signal,onDispose(fn){cleanups.push(fn)},log(...args){send({kind:'log',message:args.map(String).join(' ')})},actions:{register(name,handler){if(actions.has(name))throw Error('重复 action: '+name);actions.set(name,handler);return ()=>actions.delete(name)}},config:{read:defaults=>host('config.read',defaults),write:value=>host('config.write',value)},host:{call:(method,params)=>host('bridge.call',{method,params}),subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn)}},status:{publish(status){send({kind:'status',status})}}};const module=require(message.params.entry);if(typeof module.activate!=='function')throw Error('main 必须导出 activate');runtime=await module.activate(ctx)||{};break}
+ case 'suspendDesktop':if(typeof runtime.suspendDesktop==='function'){await runtime.suspendDesktop();result=true;}else result=false;break;
  case 'start':result=await runtime.start?.();break;
  case 'stop':result=await runtime.stop?.();break;
  case 'deactivate':controller.abort();await runtime.deactivate?.();for(const cleanup of cleanups.splice(0).reverse())await cleanup();listeners.clear();break;

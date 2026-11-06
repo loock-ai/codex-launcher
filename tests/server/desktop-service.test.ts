@@ -61,3 +61,21 @@ it('原生最后租约释放失败仍清理Dots并回读正确消费者状态',a
  expect(dots.close).toHaveBeenCalledOnce();
  expect(service.status().consumers).toBe(0);
 });
+it('重启清理重复释放同一租约时安全返回，不影响新租约并仍拒绝释放其他插件的有效租约',async()=>{
+ const {service}=fixture();
+ const old=await service.call('mobile','desktop.acquire') as any;
+ await service.release('mobile');
+ await expect(service.call('mobile','desktop.release',{leaseId:old.leaseId})).resolves.toBeUndefined();
+ const current=await service.call('mobile','desktop.acquire') as any;
+ await service.call('mobile','desktop.release',{leaseId:old.leaseId});
+ expect(service.status().consumers).toBe(1);
+ await expect(service.call('other','desktop.release',{leaseId:current.leaseId})).rejects.toThrow('无效');
+ await service.shutdown();
+});
+
+it.each(['本机 App Server 尚未就绪','本机原生 AppServerManager API 不可用','无法唯一识别桌面主连接'])('桌面重启后的暂态就绪错误进入等待重试：%s',async(message)=>{
+ const native=fixture().channel;native.connect.mockRejectedValueOnce(Error(message));
+ const service=new DesktopService({appPath:'/fixture/ChatGPT.app',cdpPort:9333},{ensure:async()=>{},createNativeChannel:()=>native as any});
+ await expect(service.call('mobile','desktop.native.acquire')).rejects.toMatchObject({code:'DESKTOP_NOT_READY'});
+ expect(service.status().consumers).toBe(0);
+});

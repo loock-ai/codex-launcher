@@ -72,7 +72,7 @@ export class LauncherController extends EventEmitter {
   const targets=health.healthy?ids.filter(id=>this.recoveryTargets.has(id)||waitingOwners.has(id)||available.find(p=>p.id===id)?.state==='waiting'):ids;
   for(const id of targets)this.recoveryTargets.add(id);
   this.log(action==='restart'?'持续故障，自动重启桌面':'正在自动重连桌面');
-  for(const id of targets){if(this.stopping||this.recoveryPauses>0||epoch!==this.recoveryEpoch)return;await this.plugins.stop(id);}
+  for(const id of targets){if(this.stopping||this.recoveryPauses>0||epoch!==this.recoveryEpoch)return;await this.plugins.suspendDesktop(id);}
   if(this.stopping||this.recoveryPauses>0||epoch!==this.recoveryEpoch)return;
   try{if(action==='restart')await this.desktop.restart(()=>!this.stopping&&this.recoveryPauses===0&&epoch===this.recoveryEpoch);else await this.desktop.ensure(()=>!this.stopping&&this.recoveryPauses===0&&epoch===this.recoveryEpoch);}
   catch(e){this.log('桌面尚未就绪，将继续重试：'+String(e));return;}
@@ -143,10 +143,10 @@ export class LauncherController extends EventEmitter {
  restartDesktop(shouldContinue?:()=>boolean){const recovering=new Set(this.recoveryTargets);this.cancelRecovery();this.recovery.reset();return this.serialize(async()=>{
   if(shouldContinue&&!shouldContinue())throw Error('重启请求已取消');
   const running=this.plugins.list().plugins.filter(p=>p.enabled&&(recovering.has(p.id)||['running','waiting'].includes(p.state))).map(p=>p.id);
-  for(const id of running)await this.plugins.stop(id);
+  for(const id of running){this.recoveryTargets.add(id);await this.plugins.suspendDesktop(id);}
   if(shouldContinue&&!shouldContinue())throw Error('重启请求已取消');
   await this.desktop.restart(shouldContinue);
-  const errors:string[]=[];for(const id of running){try{await this.plugins.start(id);}catch(e){errors.push(id+': '+(e instanceof Error?e.message:String(e)));}}
+  const errors:string[]=[];for(const id of running){try{await this.plugins.start(id);this.recoveryTargets.delete(id);}catch(e){errors.push(id+': '+(e instanceof Error?e.message:String(e)));}}
   this.log(errors.length?'桌面已重启，部分插件恢复失败：'+errors.join('；'):'桌面已重启，插件已恢复');return this.status();
  });}
  start(){this.startRecoveryMonitor();return this.serialize(async()=>{await this.plugins.startAuto();this.changed();return this.status();});}

@@ -13,7 +13,7 @@ import {forceStopDesktop,runningDesktopProcessIds} from './desktop-process.js';
 import {desktopExecutable,desktopLaunchCommand,systemOpenCommand,runPlatformCommand} from './platform.js';
 import {appServerEnvironment} from '../app-server-manager.js';
 import type {DesktopSettings} from './plugin-contract.js';
-function readinessError(error:unknown){const message=error instanceof Error?error.message:String(error);return /无法唯一识别桌面主窗口|桌面未暴露 electronBridge|等待唯一桌面主窗口|等待桌面 bridge 就绪|connectOverCDP|ECONNREFUSED|响应超时/.test(message)?Object.assign(Error(message),{code:'DESKTOP_NOT_READY'}):error;}
+function readinessError(error:unknown){const message=error instanceof Error?error.message:String(error);return /无法唯一识别桌面主窗口|桌面未暴露 electronBridge|等待唯一桌面主窗口|等待桌面 bridge 就绪|无法唯一识别桌面主连接|本机 App Server 尚未就绪|本机原生 AppServerManager API 不可用|原生 API 响应超时|connectOverCDP|ECONNREFUSED|响应超时/.test(message)?Object.assign(Error(message),{code:'DESKTOP_NOT_READY'}):error;}
 type Channel=Pick<DesktopControlChannel,'connect'|'close'|'subscribe'|'status'|'request'|'hosts'|'pendingApprovals'|'respond'|'setUserQuestionTargets'|'refreshUserQuestions'>;
 export interface DesktopServiceDeps {
  createNativeChannel?:(endpoint:string)=>Channel;createChannel?:(endpoint:string)=>Channel;createDots?:(endpoint:string)=>DesktopHttpTransport;pluginTransport?:PluginTransportFactory;
@@ -99,7 +99,7 @@ export class DesktopService {
   if(method==='desktop.details')return this.details();
   if(method==='desktop.native.acquire')return this.serial(()=>this.acquireNative(owner));
   if(method==='desktop.acquire')return this.serial(()=>this.acquire(owner));
-  if(method==='desktop.release')return this.serial(()=>this.releaseLease(owner,this.check(owner,p.leaseId)));
+  if(method==='desktop.release')return this.serial(async()=>{if(typeof p.leaseId!=='string'||!p.leaseId)throw Error('无效的桌面租约');if(!this.leases.has(p.leaseId))return;return this.releaseLease(owner,this.check(owner,p.leaseId));});
   if(method==='desktop.inject'){if(typeof p.source!=='string')throw Error('无效注入脚本');return this.serial(()=>this.inject(owner,p.source));}
   if(method==='desktop.uninject')return this.serial(()=>this.uninject(owner));
   const leaseId=this.check(owner,p.leaseId),channel=this.nativeChannels.get(leaseId)?.channel??this.channel!;
